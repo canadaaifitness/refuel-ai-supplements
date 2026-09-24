@@ -1,9 +1,9 @@
 /*
-Theme Name: Refuel AI Supplements Mobile Chrome Fixed V6.4.7
+Theme Name: Refuel AI Supplements Mobile Chrome Fixed V6.4.8
 Theme URI: https://refuelaisupplements.com/
 Author: Refuel AI
 Description: Custom Refuel AI Supplements landing page theme with WooCommerce shop, cart and checkout support.
-Version: 6.4.7
+Version: 6.4.8
 Text Domain: refuel-ai-supplements-gateway-safe-v5-6
 Requires at least: 6.0
 Tested up to: 7.1
@@ -64,7 +64,7 @@ body.refuel-wc-store-page {
 }
 
 
-/* v6.4.7: consistent WooCommerce header and compact phone controls. */
+/* v6.4.8: consistent WooCommerce header and compact phone controls. */
 .refuel-wc-brand { display:flex; align-items:center; gap:10px; white-space:nowrap; }
 .refuel-wc-brand img { width:38px; height:38px; object-fit:contain; }
 .refuel-wc-search { display:flex; align-items:center; border:1px solid var(--refuel-line); border-radius:12px; overflow:hidden; }
@@ -84,3 +84,42 @@ body.refuel-wc-store-page {
   .refuel-wc-search input { width:100%; }
   .refuel-wc-search { min-width:0; }
 }
+
+/* v6.4.8: keep WooCommerce checkout fields legible on the dark storefront. */
+.refuel-wc-main .woocommerce form .form-row input.input-text,
+.refuel-wc-main .woocommerce form .form-row textarea,
+.refuel-wc-main .woocommerce form .form-row select,
+.refuel-wc-main .woocommerce-page form .form-row input.input-text,
+.refuel-wc-main .woocommerce-page form .form-row textarea,
+.refuel-wc-main .woocommerce-page form .form-row select {
+  box-sizing: border-box !important;
+  min-height: 52px;
+  padding: 12px 14px !important;
+  border: 1px solid rgba(32,238,224,.28) !important;
+  border-radius: 9px !important;
+  color: #f2ffff !important;
+  background-color: #071416 !important;
+  color-scheme: dark;
+}
+.refuel-wc-main .woocommerce form .form-row textarea { min-height: 112px; }
+.refuel-wc-main .woocommerce form .form-row input::placeholder,
+.refuel-wc-main .woocommerce form .form-row textarea::placeholder { color:#91acb0 !important; opacity:1; }
+.refuel-wc-main .woocommerce form .form-row input:-webkit-autofill,
+.refuel-wc-main .woocommerce form .form-row input:-webkit-autofill:hover,
+.refuel-wc-main .woocommerce form .form-row input:-webkit-autofill:focus,
+.refuel-wc-main .woocommerce form .form-row textarea:-webkit-autofill,
+.refuel-wc-main .woocommerce form .form-row select:-webkit-autofill {
+  -webkit-text-fill-color: #f2ffff !important;
+  -webkit-box-shadow: 0 0 0 1000px #071416 inset !important;
+  box-shadow: 0 0 0 1000px #071416 inset !important;
+  caret-color: #f2ffff;
+}
+.refuel-wc-main .select2-container--default .select2-selection--single {
+  min-height:52px;
+  border:1px solid rgba(32,238,224,.28) !important;
+  border-radius:9px !important;
+  background:#071416 !important;
+  color:#f2ffff !important;
+}
+.refuel-wc-main .select2-container--default .select2-selection--single .select2-selection__rendered { color:#f2ffff !important; line-height:50px; }
+.refuel-wc-main .select2-container--default .select2-selection--single .select2-selection__arrow { height:50px; }

@@ -13,7 +13,7 @@ add_action('after_setup_theme', function () {
 });
 
 add_action('wp_enqueue_scripts', function () {
-    wp_enqueue_style('refuel-ai-supplements-live-style', get_stylesheet_uri(), [], '6.4.7');
+    wp_enqueue_style('refuel-ai-supplements-live-style', get_stylesheet_uri(), [], '6.4.8');
 });
 
 /**
@@ -43,10 +43,10 @@ add_action('wp_head', function () {
     $icon = get_theme_file_uri('/assets/refuel-app-icon-192.png');
     $touch_icon = get_theme_file_uri('/assets/refuel-app-icon-192.png');
     ?>
-    <link rel="manifest" href="<?php echo esc_url($manifest); ?>?v=6.4.7">
-    <meta name="refuel-theme-version" content="6.4.7">
-    <link rel="icon" href="<?php echo esc_url($icon); ?>?v=6.4.7" type="image/png" sizes="192x192">
-    <link rel="apple-touch-icon" sizes="192x192" href="<?php echo esc_url($touch_icon); ?>?v=6.4.7">
+    <link rel="manifest" href="<?php echo esc_url($manifest); ?>?v=6.4.8">
+    <meta name="refuel-theme-version" content="6.4.8">
+    <link rel="icon" href="<?php echo esc_url($icon); ?>?v=6.4.8" type="image/png" sizes="192x192">
+    <link rel="apple-touch-icon" sizes="192x192" href="<?php echo esc_url($touch_icon); ?>?v=6.4.8">
     <meta name="theme-color" content="#020708">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -189,7 +189,7 @@ add_action('wp_ajax_nopriv_refuel_reset_stale_cart', 'refuel_ajax_clear_stale_ca
 add_action('wp_footer', function () {
     $worker_url = add_query_arg([
         'refuel_pwa_worker' => '1',
-        'v'                 => '6.4.7',
+        'v'                 => '6.4.8',
     ], home_url('/'));
     ?>
     <script id="refuel-theme-loader-and-pwa-v4">
@@ -638,7 +638,7 @@ add_filter('woocommerce_add_to_cart_fragments', function ($fragments) {
 
 /** Shop product data, cached briefly so the homepage shows current prices. */
 function refuel_catalog_data() {
-    $cached = get_transient('refuel_shop_catalog_v647');
+    $cached = get_transient('refuel_shop_catalog_v648');
     if (false !== $cached) { return $cached; }
     $data = [];
     // The shop host is the source of truth, even if the landing site has its own WC database.
@@ -676,7 +676,7 @@ function refuel_catalog_data() {
             ];
         }
     }
-    set_transient('refuel_shop_catalog_v647', $data, $data ? 5 * MINUTE_IN_SECONDS : MINUTE_IN_SECONDS);
+    set_transient('refuel_shop_catalog_v648', $data, $data ? 5 * MINUTE_IN_SECONDS : MINUTE_IN_SECONDS);
     return $data;
 }
 

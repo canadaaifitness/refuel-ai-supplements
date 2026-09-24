@@ -9761,7 +9761,7 @@
     </div>
   </section>
 
-<style id="refuel-quick-categories-v647">
+<style id="refuel-quick-categories-v648">
 .refuel-quick-categories { padding:28px 0; }
 .nav-actions { position:relative; }
 .refuel-header-search summary { display:grid; place-items:center; width:40px; height:40px; border:1px solid rgba(32,238,224,.3); border-radius:10px; color:#f2ffff; cursor:pointer; font-size:1.4rem; list-style:none; }
@@ -9785,7 +9785,7 @@
 .monthly-offer-pricing strong del { color:#91acb0; font-size:.85em; margin-right:8px; }
 @media(max-width:820px) { .refuel-quick-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .refuel-quick-heading { align-items:start; } .refuel-quick-heading a { font-size:.8rem; } }
 </style>
-<section class="refuel-quick-categories" aria-labelledby="refuel-category-heading">
+<section class="refuel-quick-categories" id="refuelQuickCategories" aria-labelledby="refuel-category-heading">
   <div class="container refuel-quick-categories-inner">
     <div class="refuel-quick-heading">
       <div><span class="eyebrow">Shop supplements</span><h2 id="refuel-category-heading">Shop by Category</h2></div>
@@ -12978,7 +12978,7 @@ const compactGoalProductMap = {
 
       const screenMap = {
         home: ['#home', '#goals', '#membership'],
-        shop: ['#monthlyOffer', '#brands', '#shop'],
+        shop: ['#monthlyOffer', '#refuelQuickCategories', '#brands', '#shop'],
         trust: ['#trustScore', '#expertApproval', '#certificationStandards', '#safety', '#history']
       };
 
