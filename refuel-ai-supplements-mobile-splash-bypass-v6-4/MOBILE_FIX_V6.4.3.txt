@@ -1,0 +1,28 @@
+Refuel AI Supplements 6.4.3 - normal mobile-browser scroll chaining
+
+The live site was verified to serve 6.4.2. Buttons now work according to
+the user, but finger scrolling remains blocked.
+
+The template applies overscroll-behavior-y:contain to mobile-pwa-variant,
+including ordinary browser visits. With the document as the root scroller
+and an auto-height, overflow:auto body, the body has no vertical scroll
+range. Containment prevents gestures from passing to the root scroller.
+
+This update sets overscroll-behavior-y:auto on the unlocked browser body
+in the head and footer safeguards. Open modal locks and installed PWA
+scroll containers retain their existing rules. No templates, images,
+product content, layout or button handlers were changed.
+
+Checks: a new computed-style regression fails on 6.4.2 (contain rather
+than auto) and passes after the patch. Existing observer, navigation,
+menu, AI, loader, PHP parser and JavaScript syntax tests are also run.
+DOM tests are not physical Android touch tests; phone verification is
+still required after upload. No changes were deployed to live hosting.
+
+Install: back up the current theme, then WordPress > Appearance > Themes
+> Add New > Upload Theme > choose this ZIP > Replace current with uploaded.
+Clear Hostinger cache. Close the old phone tab and open the homepage again.
+With menus/chat closed, swipe upward over both the offer card and its
+surrounding area. Confirm that Top Brands and later sections appear.
+Then open and close the menu and verify scrolling still works.
+Rollback: upload the previous 6.4.2 ZIP using the same replacement flow.

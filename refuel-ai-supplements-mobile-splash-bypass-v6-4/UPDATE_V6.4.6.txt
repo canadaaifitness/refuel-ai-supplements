@@ -1,0 +1,40 @@
+REFUEL AI SUPPLEMENTS — 6.4.6
+
+INSTALL ON refuelaisupplements.com (the main storefront in the screenshot).
+Back up the active theme first, including any manual edits.
+Appearance > Themes > Add New > Upload Theme > select this ZIP.
+Choose Replace current with uploaded. This is the same theme folder, not a redesign.
+Clear Hostinger's website cache after replacement.
+Close all Refuel tabs and the installed app; reopen the main website online.
+If the old page still appears, open the homepage with ?refuel_refresh=646 once,
+then close and reopen it. This avoids the old worker's bare-homepage fallback.
+Do not clear cookies or all site data as a first step: that can remove your cart.
+
+CHANGES
+- Browser tabs and saved shortcuts now use the original gold-and-grey RF logo.
+- Favicon URLs use the 6.4.6 cache version so Chrome does not retain the old icon.
+- Membership plan buttons open a responsive details popup on mobile and desktop.
+- Membership subscription controls display Coming Soon and cannot open checkout.
+- Old demo membership selection is cleared so unlaunched plans cannot enable rewards.
+- Removed the worker's 3.5-second race against an old cached homepage.
+- Online page navigation requests fresh HTML; no storefront HTML is stored offline.
+- Connection failure shows a small branded offline notice, not outdated products.
+- On activation, removes only legacy cache names beginning refuel or mobile-pwa;
+  cart/session cookies, localStorage and unrelated caches are untouched.
+- Worker registration no longer waits for slow images; no automatic page reload.
+- Full header name can wrap on mobile; iPhone install wording includes Supplements.
+- Existing 6.4.3 scroll, menu, modal, image and checkout code is retained.
+
+VERIFICATION
+Automated PHP parser and JavaScript syntax checks; DOM tests for header, install
+wording, navigation, menus, AI panel, scroll CSS and loader deadline; isolated
+service-worker tests for slow network, offline, private routes and cache cleanup.
+These checks do not replace a real Android test or a live WordPress installation.
+No changes have been deployed to hosting by this ZIP's creation.
+
+AFTER UPLOAD
+Confirm the full header and install title; swipe down/up with menus closed;
+open/close menu and AI panel; revisit the homepage on a slow connection.
+An already-open old tab can stay old until closed and reopened.
+Offline storefront browsing is intentionally unavailable to avoid stale pages.
+Rollback: restore the backed-up theme or the previous 6.4.3 ZIP.

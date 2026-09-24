@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Refuel AI">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#071416"/>
+      <stop offset="1" stop-color="#020708"/>
+    </linearGradient>
+    <linearGradient id="mark" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#f6c66d"/>
+      <stop offset="1" stop-color="#20eee0"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <path d="M118 132h210c56 0 92 34 92 85 0 42-24 71-63 81l55 82h-91l-49-73h-58v73h-96V132zm96 72v37h102c12 0 19-7 19-19 0-11-7-18-19-18H214z" fill="url(#mark)"/>
+  <circle cx="394" cy="118" r="24" fill="#85ffc1"/>
+</svg>

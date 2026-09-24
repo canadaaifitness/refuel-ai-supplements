@@ -1,0 +1,26 @@
+{
+  "id": "/",
+  "name": "Refuel AI Supplements",
+  "short_name": "Refuel AI Supplements",
+  "description": "Trusted supplement shopping and AI-guided product education.",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#020708",
+  "theme_color": "#020708",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "assets/refuel-app-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/refuel-app-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
