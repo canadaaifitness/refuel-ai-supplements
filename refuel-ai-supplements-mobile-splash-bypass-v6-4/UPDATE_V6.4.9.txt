@@ -1,0 +1,7 @@
+REFUEL AI SUPPLEMENTS THEME — VERSION 6.4.9
+
+Mobile app startup now opens on featured products and Shop by Category. Goal guidance follows those shopping sections on Home. The Shop tab opens the brand and product catalogue directly.
+
+The theme, stylesheet, manifest/icon URLs, and service-worker registration use version 6.4.9 so mobile browsers request the updated files. The service worker continues to fetch live storefront pages from the network.
+
+After installing the theme, clear any WordPress/Hostinger page cache and reload the site once so cached HTML uses the updated layout.

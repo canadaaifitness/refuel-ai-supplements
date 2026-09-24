@@ -25,8 +25,8 @@
   <meta name="x5-orientation" content="portrait" />
   <meta name="msapplication-TileColor" content="#03090b" />
   <title><?php bloginfo('name'); ?> | Trusted Supplement Store</title>
-<link rel="icon" type="image/png" sizes="192x192" href="<?php echo esc_url(get_template_directory_uri() . '/assets/refuel-app-icon-192.png?v=6.4.6'); ?>" />
-  <link rel="apple-touch-icon" sizes="192x192" href="<?php echo esc_url(get_template_directory_uri() . '/assets/refuel-app-icon-192.png?v=6.4.6'); ?>" />
+<link rel="icon" type="image/png" sizes="192x192" href="<?php echo esc_url(get_template_directory_uri() . '/assets/refuel-app-icon-192.png?v=6.4.9'); ?>" />
+  <link rel="apple-touch-icon" sizes="192x192" href="<?php echo esc_url(get_template_directory_uri() . '/assets/refuel-app-icon-192.png?v=6.4.9'); ?>" />
 
   <style>
     :root {
@@ -12977,8 +12977,8 @@ const compactGoalProductMap = {
       if (!body || !main || !nav) return;
 
       const screenMap = {
-        home: ['#home', '#goals', '#membership'],
-        shop: ['#monthlyOffer', '#refuelQuickCategories', '#brands', '#shop'],
+        home: ['#monthlyOffer', '#refuelQuickCategories', '#goals', '#membership'],
+        shop: ['#brands', '#shop'],
         trust: ['#trustScore', '#expertApproval', '#certificationStandards', '#safety', '#history']
       };
 
