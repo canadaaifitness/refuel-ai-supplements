@@ -9,12 +9,12 @@
 <?php if (function_exists('wp_body_open')) { wp_body_open(); } ?>
 <header class="refuel-wc-header">
   <div class="refuel-wc-wrap refuel-wc-nav">
-    <a class="refuel-wc-brand" href="https://refuelaisupplements.com/" aria-label="Refuel AI Supplements home"><img src="<?php echo esc_url(get_template_directory_uri() . '/assets/inline/refuel-94a7da5fab076e2f.png'); ?>" alt=""><span>REFUEL <b>AI</b> SUPPLEMENTS</span></a>
+    <a class="refuel-wc-brand" href="<?php echo esc_url(refuel_public_home_url()); ?>" aria-label="Refuel AI Supplements home"><img src="<?php echo esc_url(get_template_directory_uri() . '/assets/inline/refuel-94a7da5fab076e2f.png'); ?>" alt=""><span>REFUEL <b>AI</b> SUPPLEMENTS</span></a>
     <details class="refuel-wc-mobile-menu"><summary>Menu</summary><div>
-      <a href="https://refuelaisupplements.com/">Home</a><a href="<?php echo esc_url(refuel_woo_shop_url()); ?>">Shop</a><a href="<?php echo esc_url(refuel_shop_page_url('cart')); ?>">Cart</a><a href="<?php echo esc_url(refuel_shop_page_url('myaccount')); ?>">My Account</a>
+      <a href="<?php echo esc_url(refuel_public_home_url()); ?>">Home</a><a href="<?php echo esc_url(refuel_woo_shop_url()); ?>">Shop</a><a href="<?php echo esc_url(refuel_shop_page_url('cart')); ?>">Cart</a><a href="<?php echo esc_url(refuel_shop_page_url('myaccount')); ?>">My Account</a>
     </div></details>
     <nav class="refuel-wc-links" aria-label="Store navigation">
-      <a href="https://refuelaisupplements.com/">Home</a>
+      <a href="<?php echo esc_url(refuel_public_home_url()); ?>">Home</a>
       <a href="<?php echo esc_url(refuel_shop_page_url('shop')); ?>">Shop</a>
       <a href="<?php echo esc_url(refuel_shop_page_url('cart')); ?>">Cart</a>
       <a href="<?php echo esc_url(refuel_shop_page_url('checkout')); ?>">Checkout</a>

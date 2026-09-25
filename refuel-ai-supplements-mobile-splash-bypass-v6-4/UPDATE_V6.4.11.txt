@@ -1,0 +1,7 @@
+REFUEL AI SUPPLEMENTS THEME — VERSION 6.4.11
+
+Use the same ZIP on both WordPress installations: refuelaisupplements.com and shop.refuelaisupplements.com. The shop homepage now returns to the main storefront. The shop header Home links and customer redirects point there too. Cart and checkout remain on the WooCommerce shop host.
+
+Simple-product Add buttons send the WooCommerce product ID to the shop cart. Products needing options open their WooCommerce product page. AI bundles of simple products add them to the shop cart in one visit. The old local Smart Cart badge is removed without touching the actual WooCommerce cart or cookies.
+
+After replacing the theme on both sites, clear each site's Hostinger/WordPress page cache and close/reopen the mobile app. Version 6.4.11 refreshes the stylesheet and service worker.

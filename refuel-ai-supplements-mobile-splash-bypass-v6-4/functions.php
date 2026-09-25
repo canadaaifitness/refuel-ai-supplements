@@ -12,8 +12,41 @@ add_action('after_setup_theme', function () {
     add_theme_support('wc-product-gallery-slider');
 });
 
+function refuel_public_home_url() {
+    return 'https://refuelaisupplements.com/';
+}
+
+// The WooCommerce installation has its own WordPress homepage. Send shoppers
+// back to the public storefront when they leave the cart or checkout.
+add_action('template_redirect', function () {
+    if ('shop.refuelaisupplements.com' !== wp_parse_url(home_url(), PHP_URL_HOST)) {
+        return;
+    }
+
+    if (isset($_GET['refuel_cart_add'])) {
+        if (!function_exists('WC') || !WC()->cart) {
+            return;
+        }
+        $raw = sanitize_text_field(wp_unslash($_GET['refuel_cart_add']));
+        $ids = array_slice(array_unique(array_filter(array_map('absint', explode(',', $raw)))), 0, 8);
+        foreach ($ids as $id) {
+            $product = wc_get_product($id);
+            if ($product && $product->is_type('simple') && $product->is_purchasable() && $product->is_in_stock()) {
+                WC()->cart->add_to_cart($id, 1);
+            }
+        }
+        wp_safe_redirect(refuel_shop_page_url('cart'));
+        exit;
+    }
+
+    if (is_front_page() && !isset($_GET['refuel_pwa_worker']) && !isset($_GET['add-to-cart'])) {
+        wp_redirect(refuel_public_home_url(), 302, 'Refuel AI Supplements');
+        exit;
+    }
+}, 9);
+
 add_action('wp_enqueue_scripts', function () {
-    wp_enqueue_style('refuel-ai-supplements-live-style', get_stylesheet_uri(), [], '6.4.10');
+    wp_enqueue_style('refuel-ai-supplements-live-style', get_stylesheet_uri(), [], '6.4.11');
 });
 
 /**
@@ -43,10 +76,10 @@ add_action('wp_head', function () {
     $icon = get_theme_file_uri('/assets/refuel-app-icon-192.png');
     $touch_icon = get_theme_file_uri('/assets/refuel-app-icon-192.png');
     ?>
-    <link rel="manifest" href="<?php echo esc_url($manifest); ?>?v=6.4.10">
-    <meta name="refuel-theme-version" content="6.4.10">
-    <link rel="icon" href="<?php echo esc_url($icon); ?>?v=6.4.10" type="image/png" sizes="192x192">
-    <link rel="apple-touch-icon" sizes="192x192" href="<?php echo esc_url($touch_icon); ?>?v=6.4.10">
+    <link rel="manifest" href="<?php echo esc_url($manifest); ?>?v=6.4.11">
+    <meta name="refuel-theme-version" content="6.4.11">
+    <link rel="icon" href="<?php echo esc_url($icon); ?>?v=6.4.11" type="image/png" sizes="192x192">
+    <link rel="apple-touch-icon" sizes="192x192" href="<?php echo esc_url($touch_icon); ?>?v=6.4.11">
     <meta name="theme-color" content="#020708">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -189,7 +222,7 @@ add_action('wp_ajax_nopriv_refuel_reset_stale_cart', 'refuel_ajax_clear_stale_ca
 add_action('wp_footer', function () {
     $worker_url = add_query_arg([
         'refuel_pwa_worker' => '1',
-        'v'                 => '6.4.10',
+        'v'                 => '6.4.11',
     ], home_url('/'));
     ?>
     <script id="refuel-theme-loader-and-pwa-v4">
@@ -638,7 +671,7 @@ add_filter('woocommerce_add_to_cart_fragments', function ($fragments) {
 
 /** Shop product data, cached briefly so the homepage shows current prices. */
 function refuel_catalog_data() {
-    $cached = get_transient('refuel_shop_catalog_v648');
+    $cached = get_transient('refuel_shop_catalog_v6411');
     if (false !== $cached) { return $cached; }
     $data = [];
     // The shop host is the source of truth, even if the landing site has its own WC database.
@@ -653,6 +686,8 @@ function refuel_catalog_data() {
                     $price = (float) $prices['price'] / pow(10, $minor);
                     $data[strtolower(trim(wp_strip_all_tags($item['name'])))] = [
                         'name' => wp_strip_all_tags($item['name']),
+                        'wooId' => isset($item['id']) ? absint($item['id']) : 0,
+                        'wooType' => isset($item['type']) ? sanitize_key($item['type']) : '',
                         'url' => esc_url_raw($item['permalink']),
                         'price' => $price,
                         'priceText' => 'PKR ' . number_format($price, $minor),
@@ -667,6 +702,8 @@ function refuel_catalog_data() {
         foreach (wc_get_products(['status' => 'publish', 'limit' => 100]) as $product) {
             $data[strtolower(trim($product->get_name()))] = [
                 'name' => $product->get_name(),
+                'wooId' => $product->get_id(),
+                'wooType' => $product->get_type(),
                 'url' => get_permalink($product->get_id()),
                 'price' => (float) $product->get_price(),
                 'priceText' => wp_strip_all_tags($product->get_price_html()),
@@ -676,7 +713,7 @@ function refuel_catalog_data() {
             ];
         }
     }
-    set_transient('refuel_shop_catalog_v648', $data, $data ? 5 * MINUTE_IN_SECONDS : MINUTE_IN_SECONDS);
+    set_transient('refuel_shop_catalog_v6411', $data, $data ? 5 * MINUTE_IN_SECONDS : MINUTE_IN_SECONDS);
     return $data;
 }
 

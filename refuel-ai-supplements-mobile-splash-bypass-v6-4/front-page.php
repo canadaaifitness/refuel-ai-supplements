@@ -25,8 +25,8 @@
   <meta name="x5-orientation" content="portrait" />
   <meta name="msapplication-TileColor" content="#03090b" />
   <title><?php bloginfo('name'); ?> | Trusted Supplement Store</title>
-<link rel="icon" type="image/png" sizes="192x192" href="<?php echo esc_url(get_template_directory_uri() . '/assets/refuel-app-icon-192.png?v=6.4.10'); ?>" />
-  <link rel="apple-touch-icon" sizes="192x192" href="<?php echo esc_url(get_template_directory_uri() . '/assets/refuel-app-icon-192.png?v=6.4.10'); ?>" />
+<link rel="icon" type="image/png" sizes="192x192" href="<?php echo esc_url(get_template_directory_uri() . '/assets/refuel-app-icon-192.png?v=6.4.11'); ?>" />
+  <link rel="apple-touch-icon" sizes="192x192" href="<?php echo esc_url(get_template_directory_uri() . '/assets/refuel-app-icon-192.png?v=6.4.11'); ?>" />
 
   <style>
     :root {
@@ -11426,6 +11426,8 @@
         if (!item) { card.dataset.live = '0'; card.classList.add('hidden'); return; }
         card.dataset.live = '1';
         card.dataset.url = item.url;
+        card.dataset.wooId = item.wooId || '';
+        card.dataset.wooType = item.wooType || '';
         card.dataset.price = item.price;
         card.querySelector('.price strong').textContent = item.priceText;
         card.querySelector('.price small').textContent = item.inStock ? 'Available in shop' : 'Out of stock';
@@ -11441,6 +11443,8 @@
       price: Number(card.dataset.price),
       purpose: card.dataset.purpose,
       category: card.dataset.category,
+      wooId: Number(card.dataset.wooId),
+      wooType: card.dataset.wooType,
       url: card.dataset.url
     }));
 
@@ -11449,52 +11453,15 @@
     const wooShopUrl = "<?php echo esc_js(refuel_woo_shop_url()); ?>";
     const wooCartUrl = "<?php echo esc_url(refuel_shop_page_url('cart')); ?>";
     const wooCheckoutUrl = "<?php echo esc_url(refuel_shop_page_url('checkout')); ?>";
-    const REFUEL_CART_STORAGE_KEY = 'refuelCartV7';
-    const REFUEL_CART_SCHEMA = 'v5-6';
-    let refuelCartNeedsReset = true;
-    const cart = (() => {
-      try {
-        refuelCartNeedsReset = localStorage.getItem('refuelCartSchema') !== REFUEL_CART_SCHEMA;
-        if (refuelCartNeedsReset) {
-          Object.keys(localStorage).forEach(key => {
-            if (/^refuelCartV\d+$/.test(key) || /^wc_(cart_hash|fragments)/.test(key)) localStorage.removeItem(key);
-          });
-          Object.keys(sessionStorage).forEach(key => {
-            if (/^wc_(cart_hash|fragments)/.test(key)) sessionStorage.removeItem(key);
-          });
-          return [];
-        }
-        const saved = JSON.parse(localStorage.getItem(REFUEL_CART_STORAGE_KEY) || '[]');
-        return Array.isArray(saved) ? saved : [];
-      } catch (error) {
-        return [];
-      }
-    })();
-
-    if (refuelCartNeedsReset) {
-      const resetStaleCartAfterLoad = () => {
-        const config = window.RefuelCartConfig || {};
-        const resetBody = new URLSearchParams({ action: 'refuel_reset_stale_cart', schema: REFUEL_CART_SCHEMA });
-        fetch(config.resetUrl || '/wp-admin/admin-ajax.php', {
-          method: 'POST',
-          credentials: 'same-origin',
-          cache: 'no-store',
-          body: resetBody,
-          headers: { 'Accept': 'application/json', 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' }
-        })
-          .then(response => response.ok ? response.json() : null)
-          .then(payload => {
-            if (!payload || !payload.success) return;
-            localStorage.setItem('refuelCartSchema', REFUEL_CART_SCHEMA);
-            localStorage.setItem(REFUEL_CART_STORAGE_KEY, '[]');
-            cart.splice(0, cart.length);
-            if (typeof renderCart === 'function') renderCart();
-          })
-          .catch(() => {});
-      };
-      if (document.readyState === 'complete') window.setTimeout(resetStaleCartAfterLoad, 700);
-      else window.addEventListener('load', () => window.setTimeout(resetStaleCartAfterLoad, 700), { once: true });
-    }
+    // The shop site's WooCommerce session owns the cart. Discard only the old
+    // homepage preview cart; never clear WooCommerce cookies or its server cart.
+    const cart = [];
+    try {
+      Object.keys(localStorage).forEach(key => {
+        if (/^refuelCartV\d+$/.test(key)) localStorage.removeItem(key);
+      });
+      localStorage.setItem('refuelCartSchema', 'woo-only-v1');
+    } catch (error) {}
     let selectedGoal = '';
     let deferredInstallPrompt = null;
 
@@ -11531,12 +11498,27 @@
       setBodyLock(false);
     }
 
-    function addToCart(product, quantity = 1) {
-      const existing = cart.find(item => item.id === product.id);
-      if (existing) existing.quantity += quantity;
-      else cart.push({ ...product, quantity });
-      renderCart();
-      showToast(product.name + ' added to Smart Cart');
+    function addProductsToWoo(items) {
+      const selected = items.filter(Boolean);
+      if (!selected.length) { window.location.assign(wooShopUrl); return; }
+      const simple = selected.filter(item => item.wooType === 'simple' &&
+        Number.isSafeInteger(item.wooId) && item.wooId > 0);
+      if (simple.length !== selected.length) {
+        window.location.assign(selected[0].url || wooShopUrl);
+        return;
+      }
+      const url = new URL(wooCartUrl, window.location.href);
+      if (simple.length === 1) {
+        url.searchParams.set('add-to-cart', String(simple[0].wooId));
+        url.searchParams.set('quantity', '1');
+      } else {
+        url.searchParams.set('refuel_cart_add', simple.slice(0, 8).map(item => item.wooId).join(','));
+      }
+      window.location.assign(url.toString());
+    }
+
+    function addToCart(product) {
+      addProductsToWoo([product]);
     }
 
     function removeFromCart(id) {
@@ -11553,11 +11535,12 @@
       const total = subtotal - eliteDiscount;
 
       $('#cartCount').textContent = count;
-      try { localStorage.setItem(REFUEL_CART_STORAGE_KEY, JSON.stringify(cart)); } catch (error) {}
+      $('#cartCount').style.display = count ? 'grid' : 'none';
       const v6CartBadge = document.getElementById('v6NavCartCount');
       if (v6CartBadge) {
         v6CartBadge.textContent = count > 99 ? '99+' : String(count);
         v6CartBadge.hidden = count < 1;
+        v6CartBadge.style.display = count ? '' : 'none';
       }
       $('#cartSubtotal').textContent = currency(subtotal);
       $('#cartTotal').textContent = currency(total);
@@ -11591,13 +11574,6 @@
     $('#checkoutButton').addEventListener('click', () => {
       window.location.href = wooCheckoutUrl;
     });
-
-    $$('.add-btn').forEach(button => button.addEventListener('click', event => {
-      const card = event.currentTarget.closest('.product-card');
-      const name = card ? card.dataset.name : '';
-      const separator = wooShopUrl.includes('?') ? '&' : '?';
-      window.location.href = card.dataset.url || (wooShopUrl + separator + 's=' + encodeURIComponent(name));
-    }));
 
     $$('.info-btn').forEach(button => button.addEventListener('click', event => {
       const card = event.currentTarget.closest('.product-card');
@@ -11878,7 +11854,7 @@
       if (blocked) {
         $('#openCoachFromResult').addEventListener('click', () => { closeAssessment(); openChat(); addMessage('I need general education because I have a health or medicine consideration.', 'user'); setTimeout(() => addMessage('I can explain general product categories, but I cannot recommend a personal combination. Please review exact ingredients with a doctor or pharmacist.', 'bot'), 350); });
       } else {
-        $('#addRecommendedStack').addEventListener('click', () => { recommended.forEach(product => addToCart(product)); closeAssessment(); openCart(); });
+        $('#addRecommendedStack').addEventListener('click', () => { closeAssessment(); addProductsToWoo(recommended); });
       }
     }
 
@@ -11888,7 +11864,7 @@
     assessmentBackdrop.addEventListener('click', closeAssessment);
 
     const addPreviewBundleButton = $('#addPreviewBundle');
-    if (addPreviewBundleButton) addPreviewBundleButton.addEventListener('click', () => { ['whey','creatine','multi'].map(productById).forEach(product => addToCart(product)); openCart(); });
+    if (addPreviewBundleButton) addPreviewBundleButton.addEventListener('click', () => { addProductsToWoo(['whey','creatine','multi'].map(productById)); });
 
     const chatPanel = $('#chatPanel');
     const chatMessages = $('#chatMessages');
@@ -12625,7 +12601,6 @@ const compactGoalProductMap = {
         const product = productById(button.dataset.offerAdd);
         if (!product) return;
         addToCart(product);
-        openCart();
       });
     });
 
@@ -13569,7 +13544,7 @@ const compactGoalProductMap = {
 <script id="refuel-woocommerce-bridge">
 (function () {
   var refuelWoo = {
-    home: "<?php echo esc_url(home_url('/')); ?>",
+    home: "<?php echo esc_url(refuel_public_home_url()); ?>",
     shop: "<?php echo esc_js(refuel_woo_shop_url()); ?>",
     cart: "<?php echo esc_url(refuel_shop_page_url('cart')); ?>",
     checkout: "<?php echo esc_url(refuel_shop_page_url('checkout')); ?>",
@@ -13602,12 +13577,23 @@ const compactGoalProductMap = {
     bindRedirect('#cartButton', refuelWoo.cart);
     bindRedirect('#checkoutButton', refuelWoo.checkout);
     document.querySelectorAll('.add-btn').forEach(function (button) {
-      button.setAttribute('title', 'Open this product in WooCommerce shop');
+      button.setAttribute('title', 'Add this product to the WooCommerce cart');
       button.addEventListener('click', function (event) {
         var card = event.currentTarget.closest('[data-name]');
         var name = card ? card.getAttribute('data-name') : '';
-        var separator = refuelWoo.shop.indexOf('?') === -1 ? '?' : '&';
-        stopAndGo(event, (card && card.dataset.url) || (refuelWoo.shop + separator + 's=' + encodeURIComponent(name)));
+        var id = card ? Number(card.dataset.wooId) : 0;
+        var url;
+        if (card && card.dataset.wooType === 'simple' && Number.isSafeInteger(id) && id > 0) {
+          url = new URL(refuelWoo.cart, window.location.href);
+          url.searchParams.set('add-to-cart', String(id));
+          url.searchParams.set('quantity', '1');
+          url = url.toString();
+        } else {
+          button.setAttribute('title', 'Choose options in WooCommerce shop');
+          var separator = refuelWoo.shop.indexOf('?') === -1 ? '?' : '&';
+          url = (card && card.dataset.url) || (refuelWoo.shop + separator + 's=' + encodeURIComponent(name));
+        }
+        stopAndGo(event, url);
       }, true);
     });
   });
