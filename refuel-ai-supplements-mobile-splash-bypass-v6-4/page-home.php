@@ -25,8 +25,8 @@
   <meta name="x5-orientation" content="portrait" />
   <meta name="msapplication-TileColor" content="#03090b" />
   <title><?php bloginfo('name'); ?> | Trusted Supplement Store</title>
-<link rel="icon" type="image/png" sizes="192x192" href="<?php echo esc_url(get_template_directory_uri() . '/assets/refuel-app-icon-192.png?v=6.4.9'); ?>" />
-  <link rel="apple-touch-icon" sizes="192x192" href="<?php echo esc_url(get_template_directory_uri() . '/assets/refuel-app-icon-192.png?v=6.4.9'); ?>" />
+<link rel="icon" type="image/png" sizes="192x192" href="<?php echo esc_url(get_template_directory_uri() . '/assets/refuel-app-icon-192.png?v=6.4.10'); ?>" />
+  <link rel="apple-touch-icon" sizes="192x192" href="<?php echo esc_url(get_template_directory_uri() . '/assets/refuel-app-icon-192.png?v=6.4.10'); ?>" />
 
   <style>
     :root {
@@ -8572,12 +8572,19 @@
           linear-gradient(180deg, #020708, #041012) !important;
       }
 
+      /* Only the selected tab may paint inside the fixed app viewport. */
+      body.mobile-pwa-variant.app-shell-mode main > section {
+        display: none !important;
+      }
+
       body.mobile-pwa-variant.app-shell-mode .mobile-app-screen {
         position: absolute;
         inset: 0;
         display: none;
         width: 100%;
         height: 100%;
+        background: #020708;
+        isolation: isolate;
         overflow-x: hidden;
         overflow-y: auto;
         overscroll-behavior-y: contain;
@@ -8597,6 +8604,16 @@
         opacity: 1;
         transform: translateX(0);
         animation: v5ScreenIn .24s ease both;
+      }
+
+      /* The Home cards need their own height in the scroll flow. */
+      body.mobile-pwa-variant.app-shell-mode #mobileScreen-home > #monthlyOffer,
+      body.mobile-pwa-variant.app-shell-mode #mobileScreen-home > #refuelQuickCategories,
+      body.mobile-pwa-variant.app-shell-mode #mobileScreen-home > #goals {
+        display: flow-root !important;
+        position: relative !important;
+        height: auto !important;
+        margin-top: 0 !important;
       }
 
       body.mobile-pwa-variant.app-shell-mode .mobile-app-screen > section:first-child {

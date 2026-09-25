@@ -1,4 +1,4 @@
-// Refuel AI Supplements 6.4.9: refresh the mobile shell and never replay a cached storefront/customer page.
+// Refuel AI Supplements 6.4.10: refresh the mobile shell and never replay a cached storefront/customer page.
 
 self.addEventListener('install', event => {
   event.waitUntil(self.skipWaiting());

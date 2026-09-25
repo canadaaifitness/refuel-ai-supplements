@@ -13,7 +13,7 @@ add_action('after_setup_theme', function () {
 });
 
 add_action('wp_enqueue_scripts', function () {
-    wp_enqueue_style('refuel-ai-supplements-live-style', get_stylesheet_uri(), [], '6.4.9');
+    wp_enqueue_style('refuel-ai-supplements-live-style', get_stylesheet_uri(), [], '6.4.10');
 });
 
 /**
@@ -43,10 +43,10 @@ add_action('wp_head', function () {
     $icon = get_theme_file_uri('/assets/refuel-app-icon-192.png');
     $touch_icon = get_theme_file_uri('/assets/refuel-app-icon-192.png');
     ?>
-    <link rel="manifest" href="<?php echo esc_url($manifest); ?>?v=6.4.9">
-    <meta name="refuel-theme-version" content="6.4.9">
-    <link rel="icon" href="<?php echo esc_url($icon); ?>?v=6.4.9" type="image/png" sizes="192x192">
-    <link rel="apple-touch-icon" sizes="192x192" href="<?php echo esc_url($touch_icon); ?>?v=6.4.9">
+    <link rel="manifest" href="<?php echo esc_url($manifest); ?>?v=6.4.10">
+    <meta name="refuel-theme-version" content="6.4.10">
+    <link rel="icon" href="<?php echo esc_url($icon); ?>?v=6.4.10" type="image/png" sizes="192x192">
+    <link rel="apple-touch-icon" sizes="192x192" href="<?php echo esc_url($touch_icon); ?>?v=6.4.10">
     <meta name="theme-color" content="#020708">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -189,7 +189,7 @@ add_action('wp_ajax_nopriv_refuel_reset_stale_cart', 'refuel_ajax_clear_stale_ca
 add_action('wp_footer', function () {
     $worker_url = add_query_arg([
         'refuel_pwa_worker' => '1',
-        'v'                 => '6.4.9',
+        'v'                 => '6.4.10',
     ], home_url('/'));
     ?>
     <script id="refuel-theme-loader-and-pwa-v4">
