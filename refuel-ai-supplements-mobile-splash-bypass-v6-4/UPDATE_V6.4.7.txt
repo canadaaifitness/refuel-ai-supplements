@@ -1,0 +1,17 @@
+Refuel AI Supplements theme v6.4.7 — shopping flow update
+
+What changed
+- Featured products and Shop by Category appear near the top, followed by the product catalogue. Brand, AI and trust explanations follow the product catalogue.
+- Category links, product searches, cart and checkout point to the WooCommerce shop host.
+- Product cards and featured prices use the public WooCommerce Store API on shop.refuelaisupplements.com. They show only matching, published products and do not display hardcoded demo prices or ratings.
+- The demonstration review form and unverified approval scores were removed from the shopping path.
+- The WooCommerce theme header uses the Refuel logo and a compact mobile Menu, Search and Cart layout.
+- The landing header has a product-search control for desktop and mobile.
+
+Install and verification
+1. Back up both sites. Install this theme as a new theme upload on the landing WordPress site; apply the same theme to the WooCommerce shop if the shop is a separate installation and you want the matching shop header.
+2. Verify https://shop.refuelaisupplements.com/wp-json/wc/store/v1/products?per_page=100 is publicly readable from the WordPress server. If unavailable, the landing page links to the shop without displaying guessed prices.
+3. Check mobile and desktop category search, product links, cart and checkout on the actual site. Shop prices are cached for up to 5 minutes.
+4. Product pack size, flavours, stock, delivery and returns must be maintained in the real WooCommerce products/policies; this theme does not invent those details.
+
+This package was statically checked for JavaScript syntax and ZIP integrity. PHP lint and browser/checkout testing require a WordPress/PHP environment and have not been run here. No DNS or live site settings were changed.

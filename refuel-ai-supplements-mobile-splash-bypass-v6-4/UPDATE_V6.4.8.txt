@@ -1,0 +1,7 @@
+Refuel AI Supplements theme v6.4.8 — mobile overlap and checkout field fix
+
+- The mobile app shell now moves the Shop by Category section into its Shop screen so it cannot sit over the Home screen.
+- WooCommerce checkout inputs, autofill values, textareas, and country selectors use the dark storefront colors with readable text.
+- Theme, stylesheet, PWA, and catalogue cache versions were updated to 6.4.8.
+
+Validation: JavaScript syntax and ZIP integrity checks were run. Device testing of the installed PWA and WooCommerce checkout is still required on a WordPress staging site.

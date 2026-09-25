@@ -1,0 +1,125 @@
+/*
+Theme Name: Refuel AI Supplements Mobile Chrome Fixed V6.4.11
+Theme URI: https://refuelaisupplements.com/
+Author: Refuel AI
+Description: Custom Refuel AI Supplements landing page theme with WooCommerce shop, cart and checkout support.
+Version: 6.4.11
+Text Domain: refuel-ai-supplements-gateway-safe-v5-6
+Requires at least: 6.0
+Tested up to: 7.1
+Requires PHP: 8.1
+*/
+
+:root {
+  --refuel-bg: #020708;
+  --refuel-surface: #071416;
+  --refuel-cyan: #20eee0;
+  --refuel-mint: #85ffc1;
+  --refuel-text: #f2ffff;
+  --refuel-muted: #91acb0;
+  --refuel-line: rgba(32,238,224,.18);
+}
+
+body.refuel-wc-store-page {
+  margin: 0;
+  color: var(--refuel-text);
+  background: radial-gradient(circle at 10% 10%, rgba(32,238,224,.12), transparent 30%), linear-gradient(180deg, #020607, #061215 48%, #020708);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.refuel-wc-wrap {
+  width: min(calc(100% - 38px), 1180px);
+  margin: 0 auto;
+}
+
+.refuel-wc-header, .refuel-wc-footer {
+  border-color: var(--refuel-line);
+  background: rgba(2,8,10,.84);
+  backdrop-filter: blur(18px);
+}
+
+.refuel-wc-header { border-bottom: 1px solid var(--refuel-line); position: sticky; top: 0; z-index: 20; }
+.refuel-wc-nav { min-height: 78px; display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+.refuel-wc-brand { color: var(--refuel-text); font-size: 1.1rem; font-weight: 950; text-decoration: none; letter-spacing: -.02em; }
+.refuel-wc-brand b { color: var(--refuel-cyan); }
+.refuel-wc-links { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.refuel-wc-links a { color: #cbe2e5; font-weight: 800; text-decoration: none; }
+.refuel-wc-links a:hover { color: #fff; }
+.refuel-wc-main { padding: 72px 0; min-height: 60vh; }
+.refuel-wc-main h1, .refuel-wc-main h2, .refuel-wc-main h3 { color: var(--refuel-text); }
+.refuel-wc-main .woocommerce, .refuel-wc-panel { padding: 24px; border: 1px solid var(--refuel-line); border-radius: 22px; background: rgba(7,20,22,.72); }
+.refuel-wc-main a { color: var(--refuel-cyan); }
+.refuel-wc-main .button, .refuel-wc-main button.button, .refuel-wc-main input.button {
+  border-radius: 12px !important;
+  color: #001315 !important;
+  background: linear-gradient(135deg, var(--refuel-cyan), var(--refuel-mint)) !important;
+  font-weight: 900 !important;
+}
+.refuel-wc-footer { border-top: 1px solid var(--refuel-line); padding: 28px 0; color: var(--refuel-muted); }
+
+@media (max-width: 720px) {
+  .refuel-wc-nav { align-items: flex-start; flex-direction: column; padding: 18px 0; }
+  .refuel-wc-main { padding: 38px 0; }
+  .refuel-wc-links { gap: 13px; }
+}
+
+
+/* v6.4.8: consistent WooCommerce header and compact phone controls. */
+.refuel-wc-brand { display:flex; align-items:center; gap:10px; white-space:nowrap; }
+.refuel-wc-brand img { width:38px; height:38px; object-fit:contain; }
+.refuel-wc-search { display:flex; align-items:center; border:1px solid var(--refuel-line); border-radius:12px; overflow:hidden; }
+.refuel-wc-search label { position:absolute; clip:rect(0 0 0 0); width:1px; height:1px; overflow:hidden; }
+.refuel-wc-search input { background:transparent; border:0; color:var(--refuel-text); padding:10px; width:140px; min-width:0; }
+.refuel-wc-search button { background:none; border:0; color:var(--refuel-cyan); font-size:1.4rem; cursor:pointer; }
+.refuel-wc-cart, .refuel-wc-mobile-menu summary { color:var(--refuel-text); border:1px solid var(--refuel-line); border-radius:10px; padding:9px 12px; text-decoration:none; font-weight:800; white-space:nowrap; }
+.refuel-wc-mobile-menu { display:none; }
+@media (max-width:900px) {
+  .refuel-wc-nav { display:grid; grid-template-columns:1fr auto auto; gap:10px; min-height:64px; }
+  .refuel-wc-brand { grid-column:1 / -1; font-size:.95rem; }
+  .refuel-wc-links { display:none; }
+  .refuel-wc-mobile-menu { display:block; position:relative; }
+  .refuel-wc-mobile-menu summary { cursor:pointer; list-style:none; }
+  .refuel-wc-mobile-menu[open] div { position:absolute; top:100%; left:0; z-index:30; display:grid; min-width:170px; padding:10px; border:1px solid var(--refuel-line); border-radius:12px; background:#071416; }
+  .refuel-wc-mobile-menu a { color:var(--refuel-text); padding:10px; text-decoration:none; }
+  .refuel-wc-search input { width:100%; }
+  .refuel-wc-search { min-width:0; }
+}
+
+/* v6.4.8: keep WooCommerce checkout fields legible on the dark storefront. */
+.refuel-wc-main .woocommerce form .form-row input.input-text,
+.refuel-wc-main .woocommerce form .form-row textarea,
+.refuel-wc-main .woocommerce form .form-row select,
+.refuel-wc-main .woocommerce-page form .form-row input.input-text,
+.refuel-wc-main .woocommerce-page form .form-row textarea,
+.refuel-wc-main .woocommerce-page form .form-row select {
+  box-sizing: border-box !important;
+  min-height: 52px;
+  padding: 12px 14px !important;
+  border: 1px solid rgba(32,238,224,.28) !important;
+  border-radius: 9px !important;
+  color: #f2ffff !important;
+  background-color: #071416 !important;
+  color-scheme: dark;
+}
+.refuel-wc-main .woocommerce form .form-row textarea { min-height: 112px; }
+.refuel-wc-main .woocommerce form .form-row input::placeholder,
+.refuel-wc-main .woocommerce form .form-row textarea::placeholder { color:#91acb0 !important; opacity:1; }
+.refuel-wc-main .woocommerce form .form-row input:-webkit-autofill,
+.refuel-wc-main .woocommerce form .form-row input:-webkit-autofill:hover,
+.refuel-wc-main .woocommerce form .form-row input:-webkit-autofill:focus,
+.refuel-wc-main .woocommerce form .form-row textarea:-webkit-autofill,
+.refuel-wc-main .woocommerce form .form-row select:-webkit-autofill {
+  -webkit-text-fill-color: #f2ffff !important;
+  -webkit-box-shadow: 0 0 0 1000px #071416 inset !important;
+  box-shadow: 0 0 0 1000px #071416 inset !important;
+  caret-color: #f2ffff;
+}
+.refuel-wc-main .select2-container--default .select2-selection--single {
+  min-height:52px;
+  border:1px solid rgba(32,238,224,.28) !important;
+  border-radius:9px !important;
+  background:#071416 !important;
+  color:#f2ffff !important;
+}
+.refuel-wc-main .select2-container--default .select2-selection--single .select2-selection__rendered { color:#f2ffff !important; line-height:50px; }
+.refuel-wc-main .select2-container--default .select2-selection--single .select2-selection__arrow { height:50px; }

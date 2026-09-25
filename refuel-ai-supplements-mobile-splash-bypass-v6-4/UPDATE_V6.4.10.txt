@@ -1,0 +1,5 @@
+REFUEL AI SUPPLEMENTS THEME — VERSION 6.4.10
+
+Fixes the installed mobile app overlap seen when Shop by Category, Shop by Goal, and the older AI introduction appear in the same space. In app shell mode only the current tab can paint inside the fixed viewport. Its screen now has an opaque background, and the Home sections use normal vertical flow. Ordinary mobile Chrome pages keep their scrolling layout.
+
+Install the updated ZIP over the active theme, clear the WordPress/Hostinger page cache, then close and reopen the installed app. Theme, stylesheet and service-worker versions are 6.4.10.

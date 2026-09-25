@@ -1,0 +1,45 @@
+Refuel AI Supplements - mobile freeze correction 6.4.2
+
+This updates the existing theme directory. No visual assets or homepage content
+were changed from 6.4.1.
+
+Confirmed defect:
+The mobile unlock MutationObserver watched the body's class attribute and
+unconditionally called classList.remove on the same body. Even removing an
+absent token queues an attribute mutation. This made the observer repeatedly
+call itself, starving timers and input processing. The 6.4.1 CSS repair did not
+correct this JavaScript loop.
+
+Correction:
+- Pause observation while applying the unlock, then reconnect the same observer.
+- Remove class tokens only when present.
+- Preserve the lock belonging to an open cart, assessment, chat or menu panel.
+- Remove redundant timed unlock calls.
+- Preserve the launch timeout on fresh page loads and clear it on back/forward
+  cache restoration.
+- Advance theme, manifest and service-worker cache versions to 6.4.2.
+
+Validation:
+- Live public source was confirmed as 6.4.1 with the defective observer.
+- In an isolated jsdom DOM test, the original code exceeded 100 consecutive
+  observer deliveries; the correction settled after one callback.
+- Checks at widths 390 and 412: no runaway observer; timers and clicks execute.
+- Open modal, desktop modal and installed-PWA state preservation checks pass.
+- Full homepage DOM: Shop action, menu open/close, AI chat open/close,
+  mobile scroll CSS selection and loader deadline checked.
+- All PHP files parsed using php-parser 3.2.5; inline JavaScript, service-worker
+  JavaScript, manifest and structured-data JSON syntax checked.
+- ZIP structure and integrity checked before delivery.
+
+Limits:
+These are source/DOM tests, not a physical Android touch or rendering test.
+The remote browser could inspect the public site but blocked local fixture
+URLs. PHP CLI and a complete local WordPress/WooCommerce runtime were absent.
+No live hosting files, orders, products or settings were changed by this work.
+
+Installation:
+WordPress > Appearance > Themes > Add New > Upload Theme.
+Choose the supplied 6.4.2 ZIP, then Replace current with uploaded.
+Clear the Hostinger page cache. Theme Details should show version 6.4.2.
+Open mobile Chrome in portrait and check scrolling, Shop, AI, menu and cart.
+Retain the original uploaded ZIP as the backup.

@@ -1,0 +1,5 @@
+Refuel AI Supplements theme v6.4.12
+
+Fixes the WooCommerce shop header on small screens. The installed refuel-shop-repair plugin was forcing the desktop navigation links back into the mobile header and adding a second RF logo. The theme now hides those links on mobile, removes the plugin's duplicate logo, and arranges Menu, Search, and Cart in one row beneath the brand.
+
+Install this theme ZIP on the shop.refuelaisupplements.com WordPress site and clear the page/cache plugin cache. No WooCommerce products, cart data, or checkout fields are changed.
