@@ -11374,7 +11374,7 @@
         <div><a class="brand" href="#home"><span class="brand-mark brand-mark-image"><img decoding="async" loading="lazy" src="<?php echo esc_url(get_template_directory_uri() . '/assets/inline/refuel-94a7da5fab076e2f.png'); ?>" alt="Refuel AI logo"></span><span class="brand-copy">REFUEL <b>AI</b><small>Intelligent supplements</small></span></a><p class="footer-description">A premium supplement marketplace concept combining authentic products, halal-conscious discovery and responsible AI-powered education.</p></div>
         <div class="footer-column"><h4>Shop</h4><a href="#shop">Protein</a><a href="#shop">Creatine</a><a href="#shop">Vitamins</a><a href="#shop">Performance</a></div>
         <div class="footer-column"><h4>Refuel AI</h4><a href="#goals">Shop by Goal</a><a href="#aiConsole">AI Help</a><a href="#safety">Safety</a><a href="#">About</a></div>
-        <div class="footer-column"><h4>Customer Care</h4><a href="#">Authenticity</a><a href="#">Delivery</a><a href="#">Returns</a><a href="#">Contact</a></div>
+        <div class="footer-column"><h4>Customer Care</h4><a href="<?php echo esc_url(refuel_customer_care_url('authenticity')); ?>">Authenticity</a><a href="<?php echo esc_url(refuel_customer_care_url('delivery')); ?>">Delivery</a><a href="<?php echo esc_url(refuel_customer_care_url('returns')); ?>">Returns</a><a href="<?php echo esc_url(refuel_customer_care_url('contact')); ?>">Contact</a></div>
       </div>
       <div class="footer-bottom"><span>© <span id="year"></span> Refuel AI. All rights reserved.</span><span>Supplements are not intended to diagnose, treat, cure or prevent disease.</span></div>
     </div>

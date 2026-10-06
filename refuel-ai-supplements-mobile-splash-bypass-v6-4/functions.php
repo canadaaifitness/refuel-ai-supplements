@@ -16,6 +16,31 @@ function refuel_public_home_url() {
     return 'https://refuelaisupplements.com/';
 }
 
+/** Public customer care pages that work without creating WordPress pages first. */
+function refuel_customer_care_url($topic) {
+    return add_query_arg('refuel_care', sanitize_key($topic), refuel_public_home_url());
+}
+
+add_action('template_redirect', function () {
+    $topic = isset($_GET['refuel_care']) && is_string($_GET['refuel_care'])
+        ? sanitize_key(wp_unslash($_GET['refuel_care']))
+        : '';
+    if (!in_array($topic, ['authenticity', 'delivery', 'returns', 'contact'], true)) {
+        return;
+    }
+
+    $template = get_theme_file_path('/customer-care.php');
+    if (!is_readable($template)) {
+        return;
+    }
+
+    add_filter('pre_get_document_title', function () use ($topic) {
+        return ucfirst($topic) . ' | Refuel AI Supplements';
+    });
+    include $template;
+    exit;
+}, 8);
+
 // Add bundles to the same WooCommerce installation that owns the catalogue.
 // The older shop subdomain's homepage still returns to the public storefront.
 add_action('template_redirect', function () {
@@ -44,7 +69,7 @@ add_action('template_redirect', function () {
 }, 9);
 
 add_action('wp_enqueue_scripts', function () {
-    wp_enqueue_style('refuel-ai-supplements-live-style', get_stylesheet_uri(), [], '6.4.16');
+    wp_enqueue_style('refuel-ai-supplements-live-style', get_stylesheet_uri(), [], '6.4.17');
 });
 
 /**
@@ -74,10 +99,10 @@ add_action('wp_head', function () {
     $icon = get_theme_file_uri('/assets/refuel-app-icon-192.png');
     $touch_icon = get_theme_file_uri('/assets/refuel-app-icon-192.png');
     ?>
-    <link rel="manifest" href="<?php echo esc_url($manifest); ?>?v=6.4.16">
-    <meta name="refuel-theme-version" content="6.4.16">
-    <link rel="icon" href="<?php echo esc_url($icon); ?>?v=6.4.16" type="image/png" sizes="192x192">
-    <link rel="apple-touch-icon" sizes="192x192" href="<?php echo esc_url($touch_icon); ?>?v=6.4.16">
+    <link rel="manifest" href="<?php echo esc_url($manifest); ?>?v=6.4.17">
+    <meta name="refuel-theme-version" content="6.4.17">
+    <link rel="icon" href="<?php echo esc_url($icon); ?>?v=6.4.17" type="image/png" sizes="192x192">
+    <link rel="apple-touch-icon" sizes="192x192" href="<?php echo esc_url($touch_icon); ?>?v=6.4.17">
     <meta name="theme-color" content="#020708">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -220,7 +245,7 @@ add_action('wp_ajax_nopriv_refuel_reset_stale_cart', 'refuel_ajax_clear_stale_ca
 add_action('wp_footer', function () {
     $worker_url = add_query_arg([
         'refuel_pwa_worker' => '1',
-        'v'                 => '6.4.16',
+        'v'                 => '6.4.17',
     ], home_url('/'));
     ?>
     <script id="refuel-theme-loader-and-pwa-v4">

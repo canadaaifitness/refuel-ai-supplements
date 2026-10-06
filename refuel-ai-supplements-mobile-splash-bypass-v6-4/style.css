@@ -1,9 +1,9 @@
 /*
-Theme Name: Refuel AI Supplements Mobile Chrome Fixed V6.4.16
+Theme Name: Refuel AI Supplements Mobile Chrome Fixed V6.4.17
 Theme URI: https://refuelaisupplements.com/
 Author: Refuel AI
 Description: Custom Refuel AI Supplements landing page theme with WooCommerce shop, cart and checkout support.
-Version: 6.4.16
+Version: 6.4.17
 Text Domain: refuel-ai-supplements-gateway-safe-v5-6
 Requires at least: 6.0
 Tested up to: 7.1
@@ -19,6 +19,23 @@ Requires PHP: 8.1
   --refuel-muted: #91acb0;
   --refuel-line: rgba(32,238,224,.18);
 }
+
+/* Customer Care pages opened by the homepage footer. */
+.refuel-care { min-height: 64vh; padding: 48px 0 80px; }
+.refuel-care-back { display: inline-block; margin-bottom: 28px; color: var(--refuel-cyan); text-decoration: none; }
+.refuel-care-layout { display: grid; grid-template-columns: minmax(180px, 250px) minmax(0, 1fr); gap: clamp(24px, 5vw, 72px); align-items: start; }
+.refuel-care-nav, .refuel-care-content { border: 1px solid var(--refuel-line); border-radius: 22px; background: var(--refuel-surface); padding: clamp(22px, 4vw, 40px); }
+.refuel-care-nav h2 { margin: 0 0 18px; font-size: 1.1rem; }
+.refuel-care-nav a { display: block; padding: 11px 12px; border-radius: 10px; color: var(--refuel-muted); text-decoration: none; }
+.refuel-care-nav a:hover, .refuel-care-nav a[aria-current="page"] { color: var(--refuel-text); background: rgba(32,238,224,.12); }
+.refuel-care-eyebrow { margin: 0 0 12px; color: var(--refuel-cyan); font-size: .76rem; font-weight: 700; letter-spacing: .12em; }
+.refuel-care-content h1 { margin: 0 0 15px; color: var(--refuel-text); font-size: clamp(1.9rem, 4vw, 3rem); }
+.refuel-care-intro { color: var(--refuel-text); font-size: 1.1rem; }
+.refuel-care-content ul { margin: 25px 0; padding-left: 23px; color: var(--refuel-muted); line-height: 1.7; }
+.refuel-care-content li + li { margin-top: 12px; }
+.refuel-care-help { display: flex; flex-wrap: wrap; gap: 8px 18px; padding-top: 22px; border-top: 1px solid var(--refuel-line); }
+.refuel-care-help a { color: var(--refuel-cyan); overflow-wrap: anywhere; }
+@media (max-width: 700px) { .refuel-care { padding: 28px 0 70px; } .refuel-care-layout { grid-template-columns: 1fr; } .refuel-care-nav { padding: 18px; } .refuel-care-nav a { display: inline-block; } }
 
 body.refuel-wc-store-page {
   margin: 0;
