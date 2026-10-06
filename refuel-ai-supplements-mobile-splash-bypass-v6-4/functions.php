@@ -220,7 +220,7 @@ add_action('wp_ajax_nopriv_refuel_reset_stale_cart', 'refuel_ajax_clear_stale_ca
 add_action('wp_footer', function () {
     $worker_url = add_query_arg([
         'refuel_pwa_worker' => '1',
-        'v'                 => '6.4.14',
+        'v'                 => '6.4.16',
     ], home_url('/'));
     ?>
     <script id="refuel-theme-loader-and-pwa-v4">
