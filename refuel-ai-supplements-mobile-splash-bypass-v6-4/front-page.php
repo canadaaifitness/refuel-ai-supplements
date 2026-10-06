@@ -25,8 +25,8 @@
   <meta name="x5-orientation" content="portrait" />
   <meta name="msapplication-TileColor" content="#03090b" />
   <title><?php bloginfo('name'); ?> | Trusted Supplement Store</title>
-<link rel="icon" type="image/png" sizes="192x192" href="<?php echo esc_url(get_template_directory_uri() . '/assets/refuel-app-icon-192.png?v=6.4.11'); ?>" />
-  <link rel="apple-touch-icon" sizes="192x192" href="<?php echo esc_url(get_template_directory_uri() . '/assets/refuel-app-icon-192.png?v=6.4.11'); ?>" />
+<link rel="icon" type="image/png" sizes="192x192" href="<?php echo esc_url(get_template_directory_uri() . '/assets/refuel-app-icon-192.png?v=6.4.14'); ?>" />
+  <link rel="apple-touch-icon" sizes="192x192" href="<?php echo esc_url(get_template_directory_uri() . '/assets/refuel-app-icon-192.png?v=6.4.14'); ?>" />
 
   <style>
     :root {
@@ -180,6 +180,14 @@
     .nav-links a::after { content: ""; position: absolute; left: 0; right: 100%; bottom: 0; height: 1px; background: var(--cyan); transition: .25s ease; }
     .nav-links a:hover { color: white; }
     .nav-links a:hover::after { right: 0; }
+    .nav-links .section-nav-button { padding: 8px 10px; border: 1px solid rgba(32,238,224,.25); border-radius: 10px; white-space: nowrap; }
+    .nav-links .section-nav-button::after { display: none; }
+    .nav-links { gap: 13px; }
+    #aiJourney, #trustScore, #expertApproval { scroll-margin-top: calc(var(--header-height) + 12px); }
+    @media (min-width: 1041px) and (max-width: 1320px) {
+      .nav-links { display: none; }
+      .menu-button { display: grid; }
+    }
 
     .nav-actions { display: flex; align-items: center; gap: 9px; }
     .icon-button {
@@ -8854,27 +8862,6 @@
         --v6-toolbar-h: 66px;
       }
 
-      .v6-splash {
-        position: fixed;
-        inset: 0;
-        z-index: 1000;
-        display: grid;
-        place-items: center;
-        background:
-          radial-gradient(circle at 50% 42%, rgba(32,238,224,.17), transparent 30%),
-          #020708;
-        opacity: 0;
-        visibility: hidden;
-        transition: opacity .22s ease, visibility .22s ease;
-      }
-      .v6-splash.show { opacity: 1; visibility: visible; }
-      .v6-splash-card { display: grid; justify-items: center; gap: 14px; }
-      .v6-splash-card img { width: 92px; height: 92px; border-radius: 27px; box-shadow: 0 0 50px rgba(32,238,224,.24); }
-      .v6-splash-card strong { font-size: 1.22rem; letter-spacing: -.02em; }
-      .v6-splash-card small { color: var(--muted); font-weight: 800; }
-      .v6-splash-loader { width: 86px; height: 3px; overflow: hidden; border-radius: 99px; background: rgba(255,255,255,.08); }
-      .v6-splash-loader::after { content:""; display:block; width:45%; height:100%; border-radius:inherit; background:linear-gradient(90deg,var(--cyan),var(--mint)); animation:v6Load 1s ease-in-out infinite; }
-
       .v6-network-pill {
         position: fixed;
         z-index: 420;
@@ -9663,6 +9650,14 @@
       }
     }
   </style>
+  <style id="refuel-navigation-sections-v645">
+    .review-step-icon { color: var(--cyan); font-size: 2.3rem; font-weight: 800; }
+    @media (max-width: 820px) {
+      body.mobile-pwa-variant #aiJourney { display: block !important; }
+      body.mobile-pwa-variant.app-shell-mode #aiJourney { scroll-margin-top: 0 !important; }
+      body.mobile-pwa-variant .review-step-icon { font-size: 1.55rem; }
+    }
+  </style>
   <?php wp_head(); ?>
 </head>
 <!-- REFUEL AI COMPACT COMMERCIAL RELEASE: TRUST-SUITE-V31 -->
@@ -9719,6 +9714,8 @@
         <a href="#goals">Shop by Goal</a>
         <a href="#brands">Brands</a>
         <a href="#aiConsole">AI Help</a>
+        <a href="#aiJourney" class="section-nav-button" data-trust-nav>How It Works</a>
+        <a href="#trustScore" class="section-nav-button" data-trust-nav>Trust &amp; Reviews</a>
         <a href="#membership">Membership</a>
         <a href="#safety">Safety</a>
         <a href="#history" class="history-nav-button">
@@ -9739,6 +9736,8 @@
       <a href="#goals">Shop by Goal</a>
       <a href="#brands">Global Brands</a>
       <a href="#aiConsole">AI Help</a>
+      <a href="#aiJourney" data-trust-nav>How It Works</a>
+      <a href="#trustScore" data-trust-nav>Trust &amp; Reviews</a>
       <a href="#membership">Membership</a>
       <a href="#safety">Safety Standards</a>
       <a href="#history">Our History — Since January 2017</a>
@@ -9798,7 +9797,6 @@
 .refuel-quick-tile:hover,.refuel-quick-tile:focus-visible { border-color:#20eee0; color:#85ffc1; }
 .monthly-offer-actions { grid-template-columns:1fr; }
 .monthly-offer-actions a { display:inline-flex; align-items:center; justify-content:center; text-decoration:none; min-height:38px; border-radius:10px; font-size:.72rem; font-weight:900; }
-#productGrid .product-card[data-live="0"] { display:none !important; }
 .monthly-offer-pricing strong del { color:#91acb0; font-size:.85em; margin-right:8px; }
 @media(max-width:820px) { .refuel-quick-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .refuel-quick-heading { align-items:start; } .refuel-quick-heading a { font-size:.8rem; } }
 </style>
@@ -9921,7 +9919,7 @@
             <button class="category-shop-button" type="button" data-shop-type="pump">Pump Support</button>
           </div>
           <div class="shop-result-summary">
-            <strong id="shopResultCount">Loading products</strong>
+            <strong id="shopResultCount">20 products</strong>
             <small id="shopActiveFilter">All brands • All categories</small>
           </div>
         </div>
@@ -10970,7 +10968,7 @@
       </div>
     </section>
 
-    <section class="v29-process-section">
+    <section class="v29-process-section" id="aiJourney">
       <div class="container v29-process-ribbon visible">
         <span class="v29-outline-glint" aria-hidden="true"></span>
         <div class="v29-process-intro">
@@ -11005,6 +11003,38 @@
           <span class="eyebrow">Shop with clear information</span>
           <h2>Check the product details before ordering.</h2>
         </div><p>Review the label, ingredients, seller, batch details and suitability for your needs. Ask us when information is missing.</p></div>
+      </div>
+    </section>
+
+    <section class="trust-suite-section" id="expertApproval">
+      <div class="container trust-suite-shell reveal">
+        <div class="trust-suite-head"><div>
+          <span class="eyebrow">Review process</span>
+          <h2>Three checks for a clearer choice.</h2>
+        </div><p>These are shopping checks, not endorsements by named experts. Confirm each product's own label and supporting evidence before ordering.</p></div>
+        <div class="expert-approval-grid">
+          <article class="expert-approval-card">
+            <div class="expert-avatar review-step-icon" aria-hidden="true">◎</div>
+            <div class="expert-title-row"><h3>Nutrition</h3></div>
+            <div class="expert-role">Ingredients &amp; fit</div>
+            <div class="expert-quote">Check serving size, ingredients and dietary needs against the actual product label.</div>
+            <small class="expert-status">Ask a qualified professional about personal medical concerns.</small>
+          </article>
+          <article class="expert-approval-card">
+            <div class="expert-avatar review-step-icon" aria-hidden="true">◇</div>
+            <div class="expert-title-row"><h3>Sport</h3></div>
+            <div class="expert-role">Testing &amp; purpose</div>
+            <div class="expert-quote">Compare the intended use and check any sport-testing claim for the exact product and batch.</div>
+            <small class="expert-status">Certification varies by item and batch.</small>
+          </article>
+          <article class="expert-approval-card">
+            <div class="expert-avatar review-step-icon" aria-hidden="true">▣</div>
+            <div class="expert-title-row"><h3>Quality</h3></div>
+            <div class="expert-role">Source &amp; batch</div>
+            <div class="expert-quote">Review seller information, lot details and any available certificate of analysis.</div>
+            <small class="expert-status">Request missing evidence before relying on a claim.</small>
+          </article>
+        </div>
       </div>
     </section>
 
@@ -11419,41 +11449,102 @@
   <script type="application/json" id="refuel-live-catalog"><?php echo wp_json_encode(refuel_catalog_data(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?></script>
   <script id="refuel-catalog-sync">
     (() => {
-      let live = {};
-      try { live = JSON.parse(document.getElementById('refuel-live-catalog').textContent); } catch (error) {}
-      document.querySelectorAll('#productGrid .product-card').forEach(card => {
-        const item = live[card.dataset.name.trim().toLowerCase()];
-        if (!item) { card.dataset.live = '0'; card.classList.add('hidden'); return; }
-        card.dataset.live = '1';
-        card.dataset.url = item.url;
-        card.dataset.wooId = item.wooId || '';
-        card.dataset.wooType = item.wooType || '';
-        card.dataset.price = item.price;
-        card.querySelector('.price strong').textContent = item.priceText;
-        card.querySelector('.price small').textContent = item.inStock ? 'Available in shop' : 'Out of stock';
-        if (item.image) card.querySelector('.real-product-image').src = item.image;
-        if (!item.inStock) card.querySelector('.add-btn').disabled = true;
-      });
+      const cards = [...document.querySelectorAll('#productGrid .product-card')];
+      const shopUrl = "<?php echo esc_js(refuel_woo_shop_url()); ?>";
+      const endpoint = "<?php echo esc_url(admin_url('admin-ajax.php?action=refuel_live_catalog')); ?>";
+      function applyCatalog(live) {
+        cards.forEach(card => {
+          const key = card.dataset.id.trim().toLowerCase();
+          const item = live[key] || live[card.dataset.name.trim().toLowerCase()];
+          const action = card.querySelector('.add-btn');
+          if (!item) {
+            const searchUrl = new URL(shopUrl, window.location.href);
+            searchUrl.searchParams.set('s', card.dataset.name);
+            searchUrl.searchParams.set('post_type', 'product');
+            card.dataset.live = '0';
+            card.dataset.url = searchUrl.toString();
+            card.dataset.wooId = '';
+            card.dataset.wooType = '';
+            card.dataset.price = '';
+            card.dataset.inStock = '0';
+            card.querySelector('.rating').textContent = 'Find this product in shop';
+            card.querySelector('.price strong').textContent = 'Check in shop';
+            card.querySelector('.price small').textContent = 'Price and availability in shop';
+            action.disabled = false;
+            action.textContent = '→';
+            action.setAttribute('aria-label', 'Find ' + card.dataset.name + ' in shop');
+            return;
+          }
+          card.dataset.live = '1';
+          card.dataset.name = item.name;
+          card.dataset.url = item.url;
+          card.dataset.wooId = item.wooId || '';
+          card.dataset.wooType = item.wooType || '';
+          card.dataset.price = item.price === null ? '' : item.price;
+          card.dataset.inStock = item.inStock && item.purchasable ? '1' : '0';
+          card.querySelector('.product-body h3').textContent = item.name;
+          card.querySelector('.rating').textContent = 'See product details';
+          card.querySelector('.price strong').textContent = item.priceText;
+          card.querySelector('.price small').textContent = !item.inStock ? 'Out of stock' :
+            item.purchasable ? (item.stockText || 'Available in shop') : 'Check options in shop';
+          // Keep the curated transparent catalogue image while syncing live product details.
+          action.disabled = !item.inStock || !item.purchasable;
+          action.textContent = '+';
+          action.setAttribute('aria-label', 'Add ' + item.name);
+        });
+        window.refuelUpdateProductModels?.();
+      }
+      window.refuelApplyLiveCatalog = applyCatalog;
+      let initial = {};
+      try { initial = JSON.parse(document.getElementById('refuel-live-catalog').textContent); } catch (error) {}
+      applyCatalog(initial);
+      let pending = false;
+      async function refreshCatalog() {
+        if (pending) return;
+        pending = true;
+        try {
+          const url = new URL(endpoint, window.location.href);
+          url.searchParams.set('_', String(Date.now()));
+          const response = await fetch(url, { credentials: 'same-origin', cache: 'no-store' });
+          if (!response.ok) return;
+          const payload = await response.json();
+          if (payload.success && payload.data && typeof payload.data === 'object') applyCatalog(payload.data);
+        } catch (error) {
+          // Keep the last successful catalogue when the shop is temporarily unreachable.
+        } finally { pending = false; }
+      }
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', refreshCatalog, { once: true });
+      else refreshCatalog();
+      window.addEventListener('pageshow', refreshCatalog);
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshCatalog(); });
+      window.setInterval(() => { if (!document.hidden) refreshCatalog(); }, 60000);
     })();
   </script>
   <script>
-    const products = Array.from(document.querySelectorAll('.product-card')).filter(card => card.dataset.live === '1').map(card => ({
-      id: card.dataset.id,
-      name: card.dataset.name,
-      price: Number(card.dataset.price),
-      purpose: card.dataset.purpose,
-      category: card.dataset.category,
-      wooId: Number(card.dataset.wooId),
-      wooType: card.dataset.wooType,
-      url: card.dataset.url
-    }));
+    const products = [];
+    function refuelUpdateProductModels() {
+      products.splice(0, products.length, ...Array.from(document.querySelectorAll('.product-card'))
+        .filter(card => card.dataset.live === '1' && card.dataset.inStock === '1' && card.dataset.price !== '')
+        .map(card => ({
+          id: card.dataset.id,
+          name: card.dataset.name,
+          price: Number(card.dataset.price),
+          purpose: card.dataset.purpose,
+          category: card.dataset.category,
+          wooId: Number(card.dataset.wooId),
+          wooType: card.dataset.wooType,
+          url: card.dataset.url
+        })));
+    }
+    window.refuelUpdateProductModels = refuelUpdateProductModels;
+    refuelUpdateProductModels();
 
     const productById = id => products.find(product => product.id === id);
     const currency = value => 'PKR ' + Number(value).toLocaleString('en-PK');
     const wooShopUrl = "<?php echo esc_js(refuel_woo_shop_url()); ?>";
     const wooCartUrl = "<?php echo esc_url(refuel_shop_page_url('cart')); ?>";
     const wooCheckoutUrl = "<?php echo esc_url(refuel_shop_page_url('checkout')); ?>";
-    // The shop site's WooCommerce session owns the cart. Discard only the old
+    // The main site's WooCommerce session owns the cart. Discard only the old
     // homepage preview cart; never clear WooCommerce cookies or its server cart.
     const cart = [];
     try {
@@ -12464,7 +12555,7 @@ const compactGoalProductMap = {
           activeShopBrand === 'all' || card.dataset.brand === activeShopBrand;
         const typeMatch =
           activeShopType === 'all' || card.dataset.type === activeShopType;
-        return card.dataset.live === '1' && brandMatch && typeMatch;
+        return brandMatch && typeMatch;
       });
 
       shopProductCards.forEach(card => {
@@ -12546,7 +12637,7 @@ const compactGoalProductMap = {
     document.querySelectorAll('.hero-goal-chip').forEach(button => {
       button.addEventListener('click', () => {
         setTimeout(() => {
-          const visible = shopProductCards.filter(card => card.dataset.live === '1' && !card.classList.contains('hidden')).length;
+          const visible = shopProductCards.filter(card => !card.classList.contains('hidden')).length;
           document.getElementById('shopResultCount').textContent =
             visible + (visible === 1 ? ' product' : ' products');
           document.getElementById('shopActiveFilter').textContent =
@@ -12971,7 +13062,7 @@ const compactGoalProductMap = {
       const screenMap = {
         home: ['#monthlyOffer', '#refuelQuickCategories', '#goals', '#membership'],
         shop: ['#brands', '#shop'],
-        trust: ['#trustScore', '#expertApproval', '#certificationStandards', '#safety', '#history']
+        trust: ['#aiJourney', '#trustScore', '#expertApproval', '#certificationStandards', '#safety', '#history']
       };
 
       const specialNodes = [document.getElementById('facilityLightbox')].filter(Boolean);
@@ -13102,15 +13193,6 @@ const compactGoalProductMap = {
 
 
   <!-- REFUEL AI MOBILE PWA V6 — Native-like interactive layer -->
-  <div class="v6-splash" id="v6Splash" aria-hidden="true">
-    <div class="v6-splash-card">
-      <img decoding="async" loading="lazy" src="<?php echo esc_url(get_template_directory_uri() . '/assets/inline/refuel-94a7da5fab076e2f.png'); ?>" alt="">
-      <strong>Refuel AI Supplements</strong>
-      <small>Trusted supplement intelligence</small>
-      <div class="v6-splash-loader"></div>
-    </div>
-  </div>
-
   <div class="v6-network-pill" id="v6NetworkPill"><span>●</span><span>Offline mode</span></div>
 
   <button id="v6AiQuickButton" type="button" hidden aria-hidden="true"></button>
@@ -13139,6 +13221,8 @@ const compactGoalProductMap = {
     <div class="v6-sheet-handle"></div>
     <div class="v6-sheet-head"><div><small>App controls</small><h3>Refuel AI Supplements</h3></div><button class="v6-sheet-close" data-v6-close type="button">✕</button></div>
     <div class="v6-menu-list">
+      <button class="v6-menu-row" id="v6MenuJourney" type="button"><b>➜</b><span><strong>How It Works</strong><small>Goal, safety, category and products.</small></span><em>›</em></button>
+      <button class="v6-menu-row" id="v6MenuTrustReviews" type="button"><b>✓</b><span><strong>Trust &amp; Reviews</strong><small>Product checks and review process.</small></span><em>›</em></button>
       <button class="v6-menu-row" id="v6MenuSaved" type="button"><b>♡</b><span><strong>Saved products</strong><small>Your favourites stay on this device.</small></span><em id="v6SavedCount">0</em></button>
       <button class="v6-menu-row" id="v6MenuInstall" type="button"><b>⇩</b><span><strong>Install app</strong><small>Open Refuel AI from your home screen.</small></span><em>›</em></button>
       <button class="v6-menu-row" id="v6MenuOffline" type="button"><b>✓</b><span><strong>Offline-ready shell</strong><small id="v6OfflineText">Checking connection…</small></span><em id="v6OfflineState">—</em></button>
@@ -13163,19 +13247,6 @@ const compactGoalProductMap = {
         if (localStorage.getItem('refuelV6Haptics') === 'off') return;
         if ('vibrate' in navigator) navigator.vibrate(pattern);
       };
-
-      // Brief launch screen once per tab/session.
-      const splash = qs('#v6Splash');
-      const allowSplash = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-      if (splash && allowSplash && !sessionStorage.getItem('refuelV7SplashSeen')) {
-        sessionStorage.setItem('refuelV7SplashSeen', '1');
-        splash.classList.add('show');
-        splash.setAttribute('aria-hidden', 'false');
-        setTimeout(() => {
-          splash.classList.remove('show');
-          splash.setAttribute('aria-hidden', 'true');
-        }, 3000);
-      }
 
       // Add a native-style app menu button to the fixed header.
       const navActions = qs('.nav-actions');
@@ -13261,6 +13332,26 @@ const compactGoalProductMap = {
         const button = qs(`[data-mobile-target="${name}"]`);
         if (button) button.click();
       };
+
+      const openTrustSection = id => {
+        closeSheets();
+        if (document.body.classList.contains('app-shell-mode')) activateTab('trust');
+        requestAnimationFrame(() => {
+          const section = document.getElementById(id);
+          if (!section) return;
+          const screen = section.closest('.mobile-app-screen.active');
+          if (screen) {
+            screen.scrollTo({ top: screen.scrollTop + section.getBoundingClientRect().top - screen.getBoundingClientRect().top, behavior: 'smooth' });
+          } else section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      };
+      qs('#v6MenuJourney')?.addEventListener('click', () => openTrustSection('aiJourney'));
+      qs('#v6MenuTrustReviews')?.addEventListener('click', () => openTrustSection('trustScore'));
+      qsa('[data-trust-nav]').forEach(link => link.addEventListener('click', event => {
+        if (!document.body.classList.contains('app-shell-mode')) return;
+        event.preventDefault();
+        openTrustSection(link.hash.slice(1));
+      }));
 
       qs('#v6AskAi')?.addEventListener('click', () => {
         closeSheets();

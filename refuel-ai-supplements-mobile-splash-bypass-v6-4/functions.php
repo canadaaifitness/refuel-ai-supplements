@@ -16,14 +16,11 @@ function refuel_public_home_url() {
     return 'https://refuelaisupplements.com/';
 }
 
-// The WooCommerce installation has its own WordPress homepage. Send shoppers
-// back to the public storefront when they leave the cart or checkout.
+// Add bundles to the same WooCommerce installation that owns the catalogue.
+// The older shop subdomain's homepage still returns to the public storefront.
 add_action('template_redirect', function () {
-    if ('shop.refuelaisupplements.com' !== wp_parse_url(home_url(), PHP_URL_HOST)) {
-        return;
-    }
-
-    if (isset($_GET['refuel_cart_add'])) {
+    $host = preg_replace('/^www\./', '', strtolower((string) wp_parse_url(home_url(), PHP_URL_HOST)));
+    if ('refuelaisupplements.com' === $host && isset($_GET['refuel_cart_add'])) {
         if (!function_exists('WC') || !WC()->cart) {
             return;
         }
@@ -39,14 +36,15 @@ add_action('template_redirect', function () {
         exit;
     }
 
-    if (is_front_page() && !isset($_GET['refuel_pwa_worker']) && !isset($_GET['add-to-cart'])) {
+    if ('shop.refuelaisupplements.com' === $host && is_front_page() &&
+        !isset($_GET['refuel_pwa_worker']) && !isset($_GET['add-to-cart'])) {
         wp_redirect(refuel_public_home_url(), 302, 'Refuel AI Supplements');
         exit;
     }
 }, 9);
 
 add_action('wp_enqueue_scripts', function () {
-    wp_enqueue_style('refuel-ai-supplements-live-style', get_stylesheet_uri(), [], '6.4.11');
+    wp_enqueue_style('refuel-ai-supplements-live-style', get_stylesheet_uri(), [], '6.4.16');
 });
 
 /**
@@ -76,10 +74,10 @@ add_action('wp_head', function () {
     $icon = get_theme_file_uri('/assets/refuel-app-icon-192.png');
     $touch_icon = get_theme_file_uri('/assets/refuel-app-icon-192.png');
     ?>
-    <link rel="manifest" href="<?php echo esc_url($manifest); ?>?v=6.4.11">
-    <meta name="refuel-theme-version" content="6.4.11">
-    <link rel="icon" href="<?php echo esc_url($icon); ?>?v=6.4.11" type="image/png" sizes="192x192">
-    <link rel="apple-touch-icon" sizes="192x192" href="<?php echo esc_url($touch_icon); ?>?v=6.4.11">
+    <link rel="manifest" href="<?php echo esc_url($manifest); ?>?v=6.4.16">
+    <meta name="refuel-theme-version" content="6.4.16">
+    <link rel="icon" href="<?php echo esc_url($icon); ?>?v=6.4.16" type="image/png" sizes="192x192">
+    <link rel="apple-touch-icon" sizes="192x192" href="<?php echo esc_url($touch_icon); ?>?v=6.4.16">
     <meta name="theme-color" content="#020708">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -222,7 +220,7 @@ add_action('wp_ajax_nopriv_refuel_reset_stale_cart', 'refuel_ajax_clear_stale_ca
 add_action('wp_footer', function () {
     $worker_url = add_query_arg([
         'refuel_pwa_worker' => '1',
-        'v'                 => '6.4.11',
+        'v'                 => '6.4.14',
     ], home_url('/'));
     ?>
     <script id="refuel-theme-loader-and-pwa-v4">
@@ -669,53 +667,135 @@ add_filter('woocommerce_add_to_cart_fragments', function ($fragments) {
     return $fragments;
 });
 
-/** Shop product data, cached briefly so the homepage shows current prices. */
-function refuel_catalog_data() {
-    $cached = get_transient('refuel_shop_catalog_v6411');
-    if (false !== $cached) { return $cached; }
+/** Use the main-domain WooCommerce store for prices, stock and cart IDs. */
+function refuel_catalog_data($fresh = false) {
+    $cache_key = 'refuel_shop_catalog_v6413';
+    $cached = get_transient($cache_key);
+    if (!$fresh && false !== $cached) { return $cached; }
+
     $data = [];
-    // The shop host is the source of truth, even if the landing site has its own WC database.
-    $response = wp_remote_get('https://shop.refuelaisupplements.com/wp-json/wc/store/v1/products?per_page=100', ['timeout' => 5]);
-        if (!is_wp_error($response) && 200 === wp_remote_retrieve_response_code($response)) {
-            $items = json_decode(wp_remote_retrieve_body($response), true);
-            if (is_array($items)) {
-                foreach ($items as $item) {
-                    if (empty($item['name']) || empty($item['permalink']) || !isset($item['prices']['price'])) { continue; }
-                    $prices = $item['prices'];
+    $store_host = 'refuelaisupplements.com';
+    $current_host = preg_replace('/^www\./', '', strtolower((string) wp_parse_url(home_url(), PHP_URL_HOST)));
+    if ($store_host === $current_host && function_exists('wc_get_products')) {
+        // On the main store, read its WooCommerce database directly after an edit.
+        foreach (wc_get_products(['status' => 'publish', 'limit' => 100]) as $product) {
+            $raw_price = $product->get_price();
+            $entry = [
+                'name' => $product->get_name(),
+                'wooId' => $product->get_id(),
+                'wooType' => $product->get_type(),
+                'url' => get_permalink($product->get_id()),
+                'price' => '' === $raw_price ? null : (float) $raw_price,
+                'priceText' => '' === $raw_price ? 'Check in shop' : wp_strip_all_tags(wc_price($raw_price)),
+                'inStock' => $product->is_in_stock(),
+                'purchasable' => $product->is_purchasable(),
+                'stockText' => !$product->is_in_stock() ? 'Out of stock' :
+                    ($product->managing_stock() && null !== $product->get_stock_quantity() ?
+                        max(0, (int) $product->get_stock_quantity()) . ' in stock' : 'Available in shop'),
+                'image' => wp_get_attachment_image_url($product->get_image_id(), 'woocommerce_thumbnail') ?: '',
+            ];
+            $data[strtolower(trim($entry['name']))] = $entry;
+            if ($product->get_sku()) { $data[strtolower(trim($product->get_sku()))] = $entry; }
+        }
+    } else {
+        // A second installation reads the same main-domain store.
+        $url = add_query_arg(['per_page' => 100, 'refuel_refresh' => time()],
+            'https://refuelaisupplements.com/wp-json/wc/store/v1/products');
+        $response = wp_remote_get($url, ['timeout' => 5, 'headers' => ['Cache-Control' => 'no-cache']]);
+        if (is_wp_error($response) || 200 !== wp_remote_retrieve_response_code($response)) {
+            return is_array($cached) ? $cached : [];
+        }
+        $items = json_decode(wp_remote_retrieve_body($response), true);
+        if (is_array($items)) {
+            foreach ($items as $item) {
+                    if (empty($item['name']) || empty($item['permalink'])) { continue; }
+                    $prices = isset($item['prices']) && is_array($item['prices']) ? $item['prices'] : [];
                     $minor = isset($prices['currency_minor_unit']) ? max(0, min(3, (int) $prices['currency_minor_unit'])) : 0;
-                    $price = (float) $prices['price'] / pow(10, $minor);
-                    $data[strtolower(trim(wp_strip_all_tags($item['name'])))] = [
+                    $raw_price = isset($prices['price']) ? (string) $prices['price'] : '';
+                    $price = '' === $raw_price ? null : (float) $raw_price / pow(10, $minor);
+                    $entry = [
                         'name' => wp_strip_all_tags($item['name']),
                         'wooId' => isset($item['id']) ? absint($item['id']) : 0,
                         'wooType' => isset($item['type']) ? sanitize_key($item['type']) : '',
                         'url' => esc_url_raw($item['permalink']),
                         'price' => $price,
-                        'priceText' => 'PKR ' . number_format($price, $minor),
+                        'priceText' => null === $price ? 'Check in shop' :
+                            strtoupper(sanitize_text_field($prices['currency_code'] ?? 'PKR')) . ' ' . number_format($price, $minor),
                         'inStock' => !empty($item['is_in_stock']),
+                        'purchasable' => isset($item['is_purchasable']) ? !empty($item['is_purchasable']) : null !== $price,
+                        'stockText' => empty($item['is_in_stock']) ? 'Out of stock' :
+                            (!empty($item['low_stock_remaining']) ?
+                                absint($item['low_stock_remaining']) . ' left in stock' : 'Available in shop'),
                         'image' => !empty($item['images'][0]['thumbnail']) ? esc_url_raw($item['images'][0]['thumbnail']) : '',
-                        'onSale' => !empty($item['on_sale']),
                     ];
-                }
+                    $data[strtolower(trim($entry['name']))] = $entry;
+                    if (!empty($item['sku'])) { $data[strtolower(trim($item['sku']))] = $entry; }
             }
         }
-    if (!$data && function_exists('wc_get_products') && 'shop.refuelaisupplements.com' === wp_parse_url(home_url(), PHP_URL_HOST)) {
-        foreach (wc_get_products(['status' => 'publish', 'limit' => 100]) as $product) {
-            $data[strtolower(trim($product->get_name()))] = [
-                'name' => $product->get_name(),
-                'wooId' => $product->get_id(),
-                'wooType' => $product->get_type(),
-                'url' => get_permalink($product->get_id()),
-                'price' => (float) $product->get_price(),
-                'priceText' => wp_strip_all_tags($product->get_price_html()),
-                'inStock' => $product->is_in_stock(),
-                'image' => wp_get_attachment_image_url($product->get_image_id(), 'woocommerce_thumbnail') ?: '',
-                'onSale' => $product->is_on_sale(),
-            ];
-        }
     }
-    set_transient('refuel_shop_catalog_v6411', $data, $data ? 5 * MINUTE_IN_SECONDS : MINUTE_IN_SECONDS);
+
+    if (!$fresh) { set_transient($cache_key, $data, $data ? MINUTE_IN_SECONDS : 20); }
     return $data;
 }
+
+function refuel_ajax_live_catalog() {
+    nocache_headers();
+    wp_send_json_success(refuel_catalog_data(true));
+}
+add_action('wp_ajax_refuel_live_catalog', 'refuel_ajax_live_catalog');
+add_action('wp_ajax_nopriv_refuel_live_catalog', 'refuel_ajax_live_catalog');
+
+function refuel_catalog_theme_image($product) {
+    $images = [
+        'rule1-whey' => ['Whey Protein', 'refuel-84de0605dc607052.webp'],
+        'nitrotech-original' => ['Nitro-Tech', 'refuel-3b396e2ccd1ea18f.webp'],
+        'nitrotech-gold' => ['Nitro-Tech Whey Gold', 'refuel-d8cecc89c7184b23.webp'],
+        'on-gold-standard' => ['Gold Standard 100% Whey', 'refuel-37b855181ec8ab48.webp'],
+        'nitrotech-ripped' => ['Nitro-Tech Ripped', 'refuel-2dd228e01190cd2d.webp'],
+        'rule1-isolate' => ['R1 Protein Whey Isolate', 'refuel-e1629814c6650fae.webp'],
+        'rule1-casein' => ['Casein Protein', 'refuel-bbafe20583ac0c4e.webp'],
+        'bsn-syntha-isolate' => ['Syntha-6 Isolate', 'refuel-ea5c116f8d0016ea.webp'],
+        'bsn-syntha-edge' => ['Syntha-6 Edge', 'refuel-b8dd1a91e694bde0.webp'],
+        'bpi-iso-hd' => ['ISO HD', 'refuel-c3ad43770326214d.webp'],
+        'muscletech-platinum-creatine' => ['Platinum 100% Creatine', 'refuel-357c4922496c2117.webp'],
+        'muscletech-hydroxycut-hardcore' => ['Hydroxycut Hardcore Elite', 'refuel-903bc60f5271f89e.webp'],
+        'muscletech-alpha-test' => ['Alpha Test', 'refuel-a0e206d3dcf6c0d3.webp'],
+        'gat-l-arginine' => ['L-Arginine', 'refuel-45ddaf948715f810.webp'],
+        'muscletech-platinum-multivitamin' => ['Platinum Multivitamin', 'refuel-293350c64763219b.webp'],
+        'muscletech-nitric-oxide-peptide' => ['Nitric Oxide Peptide 160', 'refuel-b5593e73bcbf5f09.webp'],
+        'muscletech-test-peptide' => ['Test Peptide T10', 'refuel-c949307e2da530d6.webp'],
+        'muscletech-stacked-pre' => ['Stacked Pre', 'refuel-480fe65014ff13c0.webp'],
+        'muscletech-plasma-bcaa' => ['Plasma BCAA', 'refuel-e3335134d802bc92.webp'],
+        'muscletech-creatine-peptide' => ['Creatine Peptide 447', 'refuel-8219bc1c2dc8aa67.webp'],
+        'kevin-levrone-gold-whey' => ['Kevin Levrone Signature Series Gold Whey Protein', 'gold_whey_transparent.png'],
+    ];
+
+    $sku = $product->get_sku();
+    $name = sanitize_title($product->get_name());
+    foreach ($images as $product_sku => [$product_name, $filename]) {
+        if ($sku === $product_sku || $name === sanitize_title($product_name)) {
+            return get_template_directory_uri() . '/assets/inline/' . $filename;
+        }
+    }
+    return '';
+}
+
+function refuel_shop_loop_thumbnail() {
+    global $product;
+    $image = $product instanceof WC_Product ? refuel_catalog_theme_image($product) : '';
+    if (!$image) {
+        woocommerce_template_loop_product_thumbnail();
+        return;
+    }
+    echo '<img class="attachment-woocommerce_thumbnail size-woocommerce_thumbnail" src="' . esc_url($image) .
+        '" loading="lazy" alt="' . esc_attr($product->get_name()) . '">';
+}
+
+add_action('wp', function () {
+    if (!function_exists('is_shop') || !(is_shop() || is_product_category() || is_product_tag())) { return; }
+    remove_action('woocommerce_before_shop_loop_item_title', 'woocommerce_template_loop_product_thumbnail', 10);
+    add_action('woocommerce_before_shop_loop_item_title', 'refuel_shop_loop_thumbnail', 10);
+});
 
 function refuel_woo_shop_url() {
     return refuel_shop_page_url('shop');
@@ -723,9 +803,10 @@ function refuel_woo_shop_url() {
 
 function refuel_shop_page_url($page) {
     $paths = ['shop' => 'shop', 'cart' => 'cart', 'checkout' => 'checkout', 'myaccount' => 'my-account'];
-    if (!isset($paths[$page])) { return 'https://shop.refuelaisupplements.com/shop/'; }
-    if ('shop.refuelaisupplements.com' === wp_parse_url(home_url(), PHP_URL_HOST) && function_exists('wc_get_page_permalink')) {
+    if (!isset($paths[$page])) { return 'https://refuelaisupplements.com/shop/'; }
+    $current_host = preg_replace('/^www\./', '', strtolower((string) wp_parse_url(home_url(), PHP_URL_HOST)));
+    if ('refuelaisupplements.com' === $current_host && function_exists('wc_get_page_permalink')) {
         return wc_get_page_permalink($page);
     }
-    return 'https://shop.refuelaisupplements.com/' . $paths[$page] . '/';
+    return 'https://refuelaisupplements.com/' . $paths[$page] . '/';
 }
