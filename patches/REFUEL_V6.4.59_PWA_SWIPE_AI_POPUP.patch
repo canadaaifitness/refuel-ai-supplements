@@ -1,0 +1,611 @@
+diff --git a/refuel-ai-supplement-portrait-v5-4/functions.php b/refuel-ai-supplement-portrait-v5-4/functions.php
+--- a/refuel-ai-supplement-portrait-v5-4/functions.php
++++ b/refuel-ai-supplement-portrait-v5-4/functions.php
+@@ -97,8 +97,8 @@
+ }, 9);
+ 
+ add_action('wp_enqueue_scripts', function () {
+-    wp_enqueue_style('refuel-ai-supplements-live-style', get_stylesheet_uri(), [], '6.4.58');
+-    wp_enqueue_style('refuel-porcelain-sky', get_theme_file_uri('/assets/porcelain-sky.css'), ['refuel-ai-supplements-live-style'], '6.4.58');
++    wp_enqueue_style('refuel-ai-supplements-live-style', get_stylesheet_uri(), [], '6.4.59');
++    wp_enqueue_style('refuel-porcelain-sky', get_theme_file_uri('/assets/porcelain-sky.css'), ['refuel-ai-supplements-live-style'], '6.4.59');
+ });
+ 
+ // Keep the full WooCommerce product form and variation handling inside the
+@@ -167,10 +167,10 @@
+     $icon = get_theme_file_uri('/assets/refuel-app-icon-192.png');
+     $touch_icon = get_theme_file_uri('/assets/refuel-app-icon-192.png');
+     ?>
+-    <link rel="manifest" href="<?php echo esc_url($manifest); ?>?v=6.4.58">
+-    <meta name="refuel-theme-version" content="6.4.58">
+-    <link rel="icon" href="<?php echo esc_url($icon); ?>?v=6.4.58" type="image/png" sizes="192x192">
+-    <link rel="apple-touch-icon" sizes="192x192" href="<?php echo esc_url($touch_icon); ?>?v=6.4.58">
++    <link rel="manifest" href="<?php echo esc_url($manifest); ?>?v=6.4.59">
++    <meta name="refuel-theme-version" content="6.4.59">
++    <link rel="icon" href="<?php echo esc_url($icon); ?>?v=6.4.59" type="image/png" sizes="192x192">
++    <link rel="apple-touch-icon" sizes="192x192" href="<?php echo esc_url($touch_icon); ?>?v=6.4.59">
+     <meta name="theme-color" content="#F6F3F0">
+     <meta name="mobile-web-app-capable" content="yes">
+     <meta name="apple-mobile-web-app-capable" content="yes">
+@@ -313,7 +313,7 @@
+ add_action('wp_footer', function () {
+     $worker_url = add_query_arg([
+         'refuel_pwa_worker' => '1',
+-        'v'                 => '6.4.58',
++        'v'                 => '6.4.59',
+     ], home_url('/'));
+     ?>
+     <script id="refuel-theme-loader-and-pwa-v4">
+diff --git a/refuel-ai-supplement-portrait-v5-4/front-page.php b/refuel-ai-supplement-portrait-v5-4/front-page.php
+--- a/refuel-ai-supplement-portrait-v5-4/front-page.php
++++ b/refuel-ai-supplement-portrait-v5-4/front-page.php
+@@ -454,6 +454,8 @@
+     .chat-panel { width: min(390px, calc(100vw - 24px)); height: min(590px, calc(100vh - 110px)); position: fixed; z-index: 90; right: 22px; bottom: 94px; display: flex; flex-direction: column; overflow: hidden; background: rgba(5,18,21,.98); border: 1px solid var(--line-strong); border-radius: 24px; box-shadow: 0 30px 90px rgba(0,0,0,.55); transform: translateY(18px) scale(.97); opacity: 0; pointer-events: none; transition: .25s ease; }
+     .chat-panel.open { transform: translateY(0) scale(1); opacity: 1; pointer-events: auto; }
+     .chat-head { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 17px; border-bottom: 1px solid var(--line); }
++    .chat-head-actions { display: flex; align-items: center; gap: 7px; }
++    .chat-tools-button { display: none; }
+     .chat-profile { display: flex; align-items: center; gap: 11px; }
+     .chat-avatar { width: 43px; height: 43px; display: grid; place-items: center; color: var(--cyan); background: rgba(32,238,224,.07); border: 1px solid var(--line); border-radius: 14px; }
+     .chat-messages { flex: 1; display: flex; flex-direction: column; gap: 11px; overflow-y: auto; padding: 17px; }
+@@ -8713,22 +8715,42 @@
+         display: none !important;
+       }
+ 
++      body.mobile-pwa-variant.app-shell-mode .refuel-chat-backdrop:not([hidden]) {
++        position: fixed;
++        z-index: 515;
++        inset: 0;
++        display: block;
++        background: rgba(10, 20, 29, .72);
++        backdrop-filter: blur(7px);
++      }
++
+       body.mobile-pwa-variant.app-shell-mode .chat-panel {
+-        z-index: 240 !important;
+-        top: var(--v5-app-header) !important;
+-        right: 0 !important;
+-        bottom: var(--v5-app-nav) !important;
+-        left: 0 !important;
+-        width: 100% !important;
+-        height: auto !important;
++        z-index: 520 !important;
++        top: 50% !important;
++        right: auto !important;
++        bottom: auto !important;
++        left: 50% !important;
++        width: min(420px, calc(100% - 28px)) !important;
++        height: min(660px, calc(100dvh - 58px)) !important;
+         max-width: none !important;
+-        border: 0 !important;
+-        border-radius: 0 !important;
+-        transform: translateY(18px) scale(.99) !important;
++        border: 1px solid var(--line-strong) !important;
++        border-radius: 24px !important;
++        transform: translate(-50%, -46%) scale(.98) !important;
+       }
+ 
+       body.mobile-pwa-variant.app-shell-mode .chat-panel.open {
+-        transform: translateY(0) scale(1) !important;
++        transform: translate(-50%, -50%) scale(1) !important;
++      }
++      body.mobile-pwa-variant.app-shell-mode .chat-tools-button {
++        display: inline-flex;
++        align-items: center;
++        min-height: 40px;
++        padding: 0 12px;
++        border: 1px solid var(--line);
++        border-radius: 12px;
++        background: transparent;
++        color: inherit;
++        font-weight: 800;
+       }
+ 
+       body.mobile-pwa-variant.app-shell-mode .cart-drawer {
+@@ -11211,9 +11233,10 @@
+     </div>
+   </section>
+ 
+-  <button class="chat-launcher" id="chatLauncher" aria-label="Open Refuel AI Coach">◉</button>
+-  <section class="chat-panel" id="chatPanel" aria-label="Refuel AI Coach">
+-    <div class="chat-head"><div class="chat-profile"><div class="chat-avatar">◉</div><div><strong>Refuel AI Coach</strong><div class="online">Online</div></div></div><button class="icon-button" id="closeChat" aria-label="Close chat">✕</button></div>
++  <button class="chat-launcher" id="chatLauncher" aria-label="Open Refuel AI Coach" aria-controls="chatPanel" aria-expanded="false">◉</button>
++  <div class="refuel-chat-backdrop" id="refuelChatBackdrop" hidden></div>
++  <section class="chat-panel" id="chatPanel" role="dialog" aria-modal="false" aria-labelledby="refuelChatTitle" aria-hidden="true" inert>
++    <div class="chat-head"><div class="chat-profile"><div class="chat-avatar">◉</div><div><strong id="refuelChatTitle">Refuel AI Coach</strong><div class="online">Online</div></div></div><div class="chat-head-actions"><button type="button" class="chat-tools-button" id="chatTools" aria-label="Open AI tools">Tools</button><button class="icon-button" id="closeChat" aria-label="Close chat">✕</button></div></div>
+     <div class="chat-messages" id="chatMessages"><div class="message bot">Welcome to Refuel AI. Tell me your goal, or ask me to compare protein, creatine, vitamins or performance products.</div></div>
+     <div class="quick-prompts"><button data-prompt="Compare whey and plant protein">Whey vs plant</button><button data-prompt="What does creatine do?">Creatine basics</button><button data-prompt="Build a muscle stack">Muscle stack</button></div>
+     <form class="chat-form" id="chatForm"><input id="chatInput" type="text" placeholder="Ask about supplements..." autocomplete="off" /><button type="submit">➜</button></form>
+@@ -11807,10 +11830,46 @@
+ 
+     const chatPanel = $('#chatPanel');
+     const chatMessages = $('#chatMessages');
+-    function openChat() { chatPanel.classList.add('open'); $('#chatInput').focus(); }
+-    function closeChat() { chatPanel.classList.remove('open'); }
++    const chatBackdrop = $('#refuelChatBackdrop');
++    let chatReturnFocus = null;
++    function openChat() {
++      if (chatPanel.classList.contains('open')) return;
++      chatReturnFocus = document.activeElement;
++      chatPanel.inert = false;
++      chatPanel.classList.add('open');
++      chatPanel.setAttribute('aria-hidden', 'false');
++      chatPanel.setAttribute('aria-modal', document.body.classList.contains('app-shell-mode') ? 'true' : 'false');
++      if (document.body.classList.contains('app-shell-mode')) chatBackdrop.hidden = false;
++      $('#chatLauncher').setAttribute('aria-expanded', 'true');
++      $('#chatInput').focus();
++    }
++    function closeChat() {
++      if (!chatPanel.classList.contains('open')) return;
++      chatPanel.classList.remove('open');
++      chatPanel.setAttribute('aria-hidden', 'true');
++      chatPanel.setAttribute('aria-modal', 'false');
++      chatPanel.inert = true;
++      chatBackdrop.hidden = true;
++      $('#chatLauncher').setAttribute('aria-expanded', 'false');
++      const previous = chatReturnFocus;
++      const fallback = document.querySelector('#mobileAppNav [data-mobile-action="ai"]');
++      (previous && previous.isConnected && getComputedStyle(previous).display !== 'none' ? previous : fallback)?.focus();
++      chatReturnFocus = null;
++    }
+     $('#chatLauncher').addEventListener('click', () => chatPanel.classList.contains('open') ? closeChat() : openChat());
+     $('#closeChat').addEventListener('click', closeChat);
++    chatBackdrop.addEventListener('click', closeChat);
++    $('#chatTools').addEventListener('click', () => { closeChat(); $('#v6AiQuickButton')?.click(); });
++    document.addEventListener('keydown', event => {
++      if (!chatPanel.classList.contains('open')) return;
++      if (event.key === 'Escape') { event.preventDefault(); closeChat(); return; }
++      if (event.key !== 'Tab' || !document.body.classList.contains('app-shell-mode')) return;
++      const focusable = [...chatPanel.querySelectorAll('button:not([disabled]), input:not([disabled])')];
++      if (!focusable.length) return;
++      const first = focusable[0], last = focusable[focusable.length - 1];
++      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
++      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
++    });
+ 
+     function addMessage(text, type) {
+       const message = document.createElement('div');
+@@ -12974,12 +13033,7 @@
+         }
+ 
+         if (action === 'ai') {
+-          const quickActions = document.getElementById('v6AiQuickButton');
+-          if (quickActions) quickActions.click();
+-          else {
+-            const launcher = document.getElementById('chatLauncher');
+-            if (launcher) launcher.click();
+-          }
++          document.getElementById('chatLauncher')?.click();
+           return;
+         }
+ 
+@@ -13385,7 +13439,7 @@
+         }
+         const freshPage = new URL(window.location.href);
+         freshPage.searchParams.set('source', 'pwa');
+-        freshPage.searchParams.set('app_version', '6.4.32');
++        freshPage.searchParams.set('app_version', '6.4.59');
+         freshPage.searchParams.set('_refresh', String(Date.now()));
+         window.location.replace(freshPage.href);
+       });
+@@ -13393,7 +13447,7 @@
+       // Restore cart and refresh new cart badge after V6 UI exists.
+       if (typeof renderCart === 'function') renderCart();
+ 
+-      // Native-like swipe navigation between primary screens.
++      // Swipe from Home to Shop, then from Shop into the AI Coach popup.
+       const order = ['home','shop','trust'];
+       Object.entries(screens).forEach(([name, screen]) => {
+         if (!screen) return;
+@@ -13410,6 +13464,11 @@
+           const dx = event.changedTouches[0].clientX - startX;
+           const dy = event.changedTouches[0].clientY - startY;
+           if (Math.abs(dx) < 75 || Math.abs(dx) < Math.abs(dy) * 1.25) return;
++          if (name === 'shop' && dx < 0) {
++            qs('[data-mobile-action="ai"]')?.click();
++            haptic(8);
++            return;
++          }
+           const index = order.indexOf(name);
+           const next = dx < 0 ? order[index + 1] : order[index - 1];
+           if (next) { activateTab(next); haptic(8); }
+diff --git a/refuel-ai-supplement-portrait-v5-4/page-home.php b/refuel-ai-supplement-portrait-v5-4/page-home.php
+--- a/refuel-ai-supplement-portrait-v5-4/page-home.php
++++ b/refuel-ai-supplement-portrait-v5-4/page-home.php
+@@ -454,6 +454,8 @@
+     .chat-panel { width: min(390px, calc(100vw - 24px)); height: min(590px, calc(100vh - 110px)); position: fixed; z-index: 90; right: 22px; bottom: 94px; display: flex; flex-direction: column; overflow: hidden; background: rgba(5,18,21,.98); border: 1px solid var(--line-strong); border-radius: 24px; box-shadow: 0 30px 90px rgba(0,0,0,.55); transform: translateY(18px) scale(.97); opacity: 0; pointer-events: none; transition: .25s ease; }
+     .chat-panel.open { transform: translateY(0) scale(1); opacity: 1; pointer-events: auto; }
+     .chat-head { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 17px; border-bottom: 1px solid var(--line); }
++    .chat-head-actions { display: flex; align-items: center; gap: 7px; }
++    .chat-tools-button { display: none; }
+     .chat-profile { display: flex; align-items: center; gap: 11px; }
+     .chat-avatar { width: 43px; height: 43px; display: grid; place-items: center; color: var(--cyan); background: rgba(32,238,224,.07); border: 1px solid var(--line); border-radius: 14px; }
+     .chat-messages { flex: 1; display: flex; flex-direction: column; gap: 11px; overflow-y: auto; padding: 17px; }
+@@ -8713,22 +8715,42 @@
+         display: none !important;
+       }
+ 
++      body.mobile-pwa-variant.app-shell-mode .refuel-chat-backdrop:not([hidden]) {
++        position: fixed;
++        z-index: 515;
++        inset: 0;
++        display: block;
++        background: rgba(10, 20, 29, .72);
++        backdrop-filter: blur(7px);
++      }
++
+       body.mobile-pwa-variant.app-shell-mode .chat-panel {
+-        z-index: 240 !important;
+-        top: var(--v5-app-header) !important;
+-        right: 0 !important;
+-        bottom: var(--v5-app-nav) !important;
+-        left: 0 !important;
+-        width: 100% !important;
+-        height: auto !important;
++        z-index: 520 !important;
++        top: 50% !important;
++        right: auto !important;
++        bottom: auto !important;
++        left: 50% !important;
++        width: min(420px, calc(100% - 28px)) !important;
++        height: min(660px, calc(100dvh - 58px)) !important;
+         max-width: none !important;
+-        border: 0 !important;
+-        border-radius: 0 !important;
+-        transform: translateY(18px) scale(.99) !important;
++        border: 1px solid var(--line-strong) !important;
++        border-radius: 24px !important;
++        transform: translate(-50%, -46%) scale(.98) !important;
+       }
+ 
+       body.mobile-pwa-variant.app-shell-mode .chat-panel.open {
+-        transform: translateY(0) scale(1) !important;
++        transform: translate(-50%, -50%) scale(1) !important;
++      }
++      body.mobile-pwa-variant.app-shell-mode .chat-tools-button {
++        display: inline-flex;
++        align-items: center;
++        min-height: 40px;
++        padding: 0 12px;
++        border: 1px solid var(--line);
++        border-radius: 12px;
++        background: transparent;
++        color: inherit;
++        font-weight: 800;
+       }
+ 
+       body.mobile-pwa-variant.app-shell-mode .cart-drawer {
+@@ -11168,9 +11190,10 @@
+     </div>
+   </section>
+ 
+-  <button class="chat-launcher" id="chatLauncher" aria-label="Open Refuel AI Coach">◉</button>
+-  <section class="chat-panel" id="chatPanel" aria-label="Refuel AI Coach">
+-    <div class="chat-head"><div class="chat-profile"><div class="chat-avatar">◉</div><div><strong>Refuel AI Coach</strong><div class="online">Online</div></div></div><button class="icon-button" id="closeChat" aria-label="Close chat">✕</button></div>
++  <button class="chat-launcher" id="chatLauncher" aria-label="Open Refuel AI Coach" aria-controls="chatPanel" aria-expanded="false">◉</button>
++  <div class="refuel-chat-backdrop" id="refuelChatBackdrop" hidden></div>
++  <section class="chat-panel" id="chatPanel" role="dialog" aria-modal="false" aria-labelledby="refuelChatTitle" aria-hidden="true" inert>
++    <div class="chat-head"><div class="chat-profile"><div class="chat-avatar">◉</div><div><strong id="refuelChatTitle">Refuel AI Coach</strong><div class="online">Online</div></div></div><div class="chat-head-actions"><button type="button" class="chat-tools-button" id="chatTools" aria-label="Open AI tools">Tools</button><button class="icon-button" id="closeChat" aria-label="Close chat">✕</button></div></div>
+     <div class="chat-messages" id="chatMessages"><div class="message bot">Welcome to Refuel AI. Tell me your goal, or ask me to compare protein, creatine, vitamins or performance products.</div></div>
+     <div class="quick-prompts"><button data-prompt="Compare whey and plant protein">Whey vs plant</button><button data-prompt="What does creatine do?">Creatine basics</button><button data-prompt="Build a muscle stack">Muscle stack</button></div>
+     <form class="chat-form" id="chatForm"><input id="chatInput" type="text" placeholder="Ask about supplements..." autocomplete="off" /><button type="submit">➜</button></form>
+@@ -11773,10 +11796,46 @@
+ 
+     const chatPanel = $('#chatPanel');
+     const chatMessages = $('#chatMessages');
+-    function openChat() { chatPanel.classList.add('open'); $('#chatInput').focus(); }
+-    function closeChat() { chatPanel.classList.remove('open'); }
++    const chatBackdrop = $('#refuelChatBackdrop');
++    let chatReturnFocus = null;
++    function openChat() {
++      if (chatPanel.classList.contains('open')) return;
++      chatReturnFocus = document.activeElement;
++      chatPanel.inert = false;
++      chatPanel.classList.add('open');
++      chatPanel.setAttribute('aria-hidden', 'false');
++      chatPanel.setAttribute('aria-modal', document.body.classList.contains('app-shell-mode') ? 'true' : 'false');
++      if (document.body.classList.contains('app-shell-mode')) chatBackdrop.hidden = false;
++      $('#chatLauncher').setAttribute('aria-expanded', 'true');
++      $('#chatInput').focus();
++    }
++    function closeChat() {
++      if (!chatPanel.classList.contains('open')) return;
++      chatPanel.classList.remove('open');
++      chatPanel.setAttribute('aria-hidden', 'true');
++      chatPanel.setAttribute('aria-modal', 'false');
++      chatPanel.inert = true;
++      chatBackdrop.hidden = true;
++      $('#chatLauncher').setAttribute('aria-expanded', 'false');
++      const previous = chatReturnFocus;
++      const fallback = document.querySelector('#mobileAppNav [data-mobile-action="ai"]');
++      (previous && previous.isConnected && getComputedStyle(previous).display !== 'none' ? previous : fallback)?.focus();
++      chatReturnFocus = null;
++    }
+     $('#chatLauncher').addEventListener('click', () => chatPanel.classList.contains('open') ? closeChat() : openChat());
+     $('#closeChat').addEventListener('click', closeChat);
++    chatBackdrop.addEventListener('click', closeChat);
++    $('#chatTools').addEventListener('click', () => { closeChat(); $('#v6AiQuickButton')?.click(); });
++    document.addEventListener('keydown', event => {
++      if (!chatPanel.classList.contains('open')) return;
++      if (event.key === 'Escape') { event.preventDefault(); closeChat(); return; }
++      if (event.key !== 'Tab' || !document.body.classList.contains('app-shell-mode')) return;
++      const focusable = [...chatPanel.querySelectorAll('button:not([disabled]), input:not([disabled])')];
++      if (!focusable.length) return;
++      const first = focusable[0], last = focusable[focusable.length - 1];
++      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
++      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
++    });
+ 
+     function addMessage(text, type) {
+       const message = document.createElement('div');
+@@ -12940,12 +12999,7 @@
+         }
+ 
+         if (action === 'ai') {
+-          const quickActions = document.getElementById('v6AiQuickButton');
+-          if (quickActions) quickActions.click();
+-          else {
+-            const launcher = document.getElementById('chatLauncher');
+-            if (launcher) launcher.click();
+-          }
++          document.getElementById('chatLauncher')?.click();
+           return;
+         }
+ 
+@@ -13351,7 +13405,7 @@
+         }
+         const freshPage = new URL(window.location.href);
+         freshPage.searchParams.set('source', 'pwa');
+-        freshPage.searchParams.set('app_version', '6.4.32');
++        freshPage.searchParams.set('app_version', '6.4.59');
+         freshPage.searchParams.set('_refresh', String(Date.now()));
+         window.location.replace(freshPage.href);
+       });
+@@ -13359,7 +13413,7 @@
+       // Restore cart and refresh new cart badge after V6 UI exists.
+       if (typeof renderCart === 'function') renderCart();
+ 
+-      // Native-like swipe navigation between primary screens.
++      // Swipe from Home to Shop, then from Shop into the AI Coach popup.
+       const order = ['home','shop','trust'];
+       Object.entries(screens).forEach(([name, screen]) => {
+         if (!screen) return;
+@@ -13376,6 +13430,11 @@
+           const dx = event.changedTouches[0].clientX - startX;
+           const dy = event.changedTouches[0].clientY - startY;
+           if (Math.abs(dx) < 75 || Math.abs(dx) < Math.abs(dy) * 1.25) return;
++          if (name === 'shop' && dx < 0) {
++            qs('[data-mobile-action="ai"]')?.click();
++            haptic(8);
++            return;
++          }
+           const index = order.indexOf(name);
+           const next = dx < 0 ? order[index + 1] : order[index - 1];
+           if (next) { activateTab(next); haptic(8); }
+diff --git a/refuel-ai-supplement-portrait-v5-4/index.php b/refuel-ai-supplement-portrait-v5-4/index.php
+--- a/refuel-ai-supplement-portrait-v5-4/index.php
++++ b/refuel-ai-supplement-portrait-v5-4/index.php
+@@ -454,6 +454,8 @@
+     .chat-panel { width: min(390px, calc(100vw - 24px)); height: min(590px, calc(100vh - 110px)); position: fixed; z-index: 90; right: 22px; bottom: 94px; display: flex; flex-direction: column; overflow: hidden; background: rgba(5,18,21,.98); border: 1px solid var(--line-strong); border-radius: 24px; box-shadow: 0 30px 90px rgba(0,0,0,.55); transform: translateY(18px) scale(.97); opacity: 0; pointer-events: none; transition: .25s ease; }
+     .chat-panel.open { transform: translateY(0) scale(1); opacity: 1; pointer-events: auto; }
+     .chat-head { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 17px; border-bottom: 1px solid var(--line); }
++    .chat-head-actions { display: flex; align-items: center; gap: 7px; }
++    .chat-tools-button { display: none; }
+     .chat-profile { display: flex; align-items: center; gap: 11px; }
+     .chat-avatar { width: 43px; height: 43px; display: grid; place-items: center; color: var(--cyan); background: rgba(32,238,224,.07); border: 1px solid var(--line); border-radius: 14px; }
+     .chat-messages { flex: 1; display: flex; flex-direction: column; gap: 11px; overflow-y: auto; padding: 17px; }
+@@ -8713,22 +8715,42 @@
+         display: none !important;
+       }
+ 
++      body.mobile-pwa-variant.app-shell-mode .refuel-chat-backdrop:not([hidden]) {
++        position: fixed;
++        z-index: 515;
++        inset: 0;
++        display: block;
++        background: rgba(10, 20, 29, .72);
++        backdrop-filter: blur(7px);
++      }
++
+       body.mobile-pwa-variant.app-shell-mode .chat-panel {
+-        z-index: 240 !important;
+-        top: var(--v5-app-header) !important;
+-        right: 0 !important;
+-        bottom: var(--v5-app-nav) !important;
+-        left: 0 !important;
+-        width: 100% !important;
+-        height: auto !important;
++        z-index: 520 !important;
++        top: 50% !important;
++        right: auto !important;
++        bottom: auto !important;
++        left: 50% !important;
++        width: min(420px, calc(100% - 28px)) !important;
++        height: min(660px, calc(100dvh - 58px)) !important;
+         max-width: none !important;
+-        border: 0 !important;
+-        border-radius: 0 !important;
+-        transform: translateY(18px) scale(.99) !important;
++        border: 1px solid var(--line-strong) !important;
++        border-radius: 24px !important;
++        transform: translate(-50%, -46%) scale(.98) !important;
+       }
+ 
+       body.mobile-pwa-variant.app-shell-mode .chat-panel.open {
+-        transform: translateY(0) scale(1) !important;
++        transform: translate(-50%, -50%) scale(1) !important;
++      }
++      body.mobile-pwa-variant.app-shell-mode .chat-tools-button {
++        display: inline-flex;
++        align-items: center;
++        min-height: 40px;
++        padding: 0 12px;
++        border: 1px solid var(--line);
++        border-radius: 12px;
++        background: transparent;
++        color: inherit;
++        font-weight: 800;
+       }
+ 
+       body.mobile-pwa-variant.app-shell-mode .cart-drawer {
+@@ -11168,9 +11190,10 @@
+     </div>
+   </section>
+ 
+-  <button class="chat-launcher" id="chatLauncher" aria-label="Open Refuel AI Coach">◉</button>
+-  <section class="chat-panel" id="chatPanel" aria-label="Refuel AI Coach">
+-    <div class="chat-head"><div class="chat-profile"><div class="chat-avatar">◉</div><div><strong>Refuel AI Coach</strong><div class="online">Online</div></div></div><button class="icon-button" id="closeChat" aria-label="Close chat">✕</button></div>
++  <button class="chat-launcher" id="chatLauncher" aria-label="Open Refuel AI Coach" aria-controls="chatPanel" aria-expanded="false">◉</button>
++  <div class="refuel-chat-backdrop" id="refuelChatBackdrop" hidden></div>
++  <section class="chat-panel" id="chatPanel" role="dialog" aria-modal="false" aria-labelledby="refuelChatTitle" aria-hidden="true" inert>
++    <div class="chat-head"><div class="chat-profile"><div class="chat-avatar">◉</div><div><strong id="refuelChatTitle">Refuel AI Coach</strong><div class="online">Online</div></div></div><div class="chat-head-actions"><button type="button" class="chat-tools-button" id="chatTools" aria-label="Open AI tools">Tools</button><button class="icon-button" id="closeChat" aria-label="Close chat">✕</button></div></div>
+     <div class="chat-messages" id="chatMessages"><div class="message bot">Welcome to Refuel AI. Tell me your goal, or ask me to compare protein, creatine, vitamins or performance products.</div></div>
+     <div class="quick-prompts"><button data-prompt="Compare whey and plant protein">Whey vs plant</button><button data-prompt="What does creatine do?">Creatine basics</button><button data-prompt="Build a muscle stack">Muscle stack</button></div>
+     <form class="chat-form" id="chatForm"><input id="chatInput" type="text" placeholder="Ask about supplements..." autocomplete="off" /><button type="submit">➜</button></form>
+@@ -11773,10 +11796,46 @@
+ 
+     const chatPanel = $('#chatPanel');
+     const chatMessages = $('#chatMessages');
+-    function openChat() { chatPanel.classList.add('open'); $('#chatInput').focus(); }
+-    function closeChat() { chatPanel.classList.remove('open'); }
++    const chatBackdrop = $('#refuelChatBackdrop');
++    let chatReturnFocus = null;
++    function openChat() {
++      if (chatPanel.classList.contains('open')) return;
++      chatReturnFocus = document.activeElement;
++      chatPanel.inert = false;
++      chatPanel.classList.add('open');
++      chatPanel.setAttribute('aria-hidden', 'false');
++      chatPanel.setAttribute('aria-modal', document.body.classList.contains('app-shell-mode') ? 'true' : 'false');
++      if (document.body.classList.contains('app-shell-mode')) chatBackdrop.hidden = false;
++      $('#chatLauncher').setAttribute('aria-expanded', 'true');
++      $('#chatInput').focus();
++    }
++    function closeChat() {
++      if (!chatPanel.classList.contains('open')) return;
++      chatPanel.classList.remove('open');
++      chatPanel.setAttribute('aria-hidden', 'true');
++      chatPanel.setAttribute('aria-modal', 'false');
++      chatPanel.inert = true;
++      chatBackdrop.hidden = true;
++      $('#chatLauncher').setAttribute('aria-expanded', 'false');
++      const previous = chatReturnFocus;
++      const fallback = document.querySelector('#mobileAppNav [data-mobile-action="ai"]');
++      (previous && previous.isConnected && getComputedStyle(previous).display !== 'none' ? previous : fallback)?.focus();
++      chatReturnFocus = null;
++    }
+     $('#chatLauncher').addEventListener('click', () => chatPanel.classList.contains('open') ? closeChat() : openChat());
+     $('#closeChat').addEventListener('click', closeChat);
++    chatBackdrop.addEventListener('click', closeChat);
++    $('#chatTools').addEventListener('click', () => { closeChat(); $('#v6AiQuickButton')?.click(); });
++    document.addEventListener('keydown', event => {
++      if (!chatPanel.classList.contains('open')) return;
++      if (event.key === 'Escape') { event.preventDefault(); closeChat(); return; }
++      if (event.key !== 'Tab' || !document.body.classList.contains('app-shell-mode')) return;
++      const focusable = [...chatPanel.querySelectorAll('button:not([disabled]), input:not([disabled])')];
++      if (!focusable.length) return;
++      const first = focusable[0], last = focusable[focusable.length - 1];
++      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
++      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
++    });
+ 
+     function addMessage(text, type) {
+       const message = document.createElement('div');
+@@ -12940,12 +12999,7 @@
+         }
+ 
+         if (action === 'ai') {
+-          const quickActions = document.getElementById('v6AiQuickButton');
+-          if (quickActions) quickActions.click();
+-          else {
+-            const launcher = document.getElementById('chatLauncher');
+-            if (launcher) launcher.click();
+-          }
++          document.getElementById('chatLauncher')?.click();
+           return;
+         }
+ 
+@@ -13351,7 +13405,7 @@
+         }
+         const freshPage = new URL(window.location.href);
+         freshPage.searchParams.set('source', 'pwa');
+-        freshPage.searchParams.set('app_version', '6.4.32');
++        freshPage.searchParams.set('app_version', '6.4.59');
+         freshPage.searchParams.set('_refresh', String(Date.now()));
+         window.location.replace(freshPage.href);
+       });
+@@ -13359,7 +13413,7 @@
+       // Restore cart and refresh new cart badge after V6 UI exists.
+       if (typeof renderCart === 'function') renderCart();
+ 
+-      // Native-like swipe navigation between primary screens.
++      // Swipe from Home to Shop, then from Shop into the AI Coach popup.
+       const order = ['home','shop','trust'];
+       Object.entries(screens).forEach(([name, screen]) => {
+         if (!screen) return;
+@@ -13376,6 +13430,11 @@
+           const dx = event.changedTouches[0].clientX - startX;
+           const dy = event.changedTouches[0].clientY - startY;
+           if (Math.abs(dx) < 75 || Math.abs(dx) < Math.abs(dy) * 1.25) return;
++          if (name === 'shop' && dx < 0) {
++            qs('[data-mobile-action="ai"]')?.click();
++            haptic(8);
++            return;
++          }
+           const index = order.indexOf(name);
+           const next = dx < 0 ? order[index + 1] : order[index - 1];
+           if (next) { activateTab(next); haptic(8); }
+diff --git a/refuel-ai-supplement-portrait-v5-4/style.css b/refuel-ai-supplement-portrait-v5-4/style.css
+--- a/refuel-ai-supplement-portrait-v5-4/style.css
++++ b/refuel-ai-supplement-portrait-v5-4/style.css
+@@ -1,9 +1,9 @@
+ /*
+-Theme Name: Refuel AI Supplements Mobile Chrome Fixed V6.4.58
++Theme Name: Refuel AI Supplements Mobile Chrome Fixed V6.4.59
+ Theme URI: https://refuelaisupplements.com/
+ Author: Refuel AI
+ Description: Custom Refuel AI Supplements landing page theme with WooCommerce shop, cart and checkout support.
+-Version: 6.4.58
++Version: 6.4.59
+ Text Domain: refuel-ai-supplements-gateway-safe-v5-6
+ Requires at least: 6.0
+ Tested up to: 7.1
+diff --git a/refuel-ai-supplement-portrait-v5-4/manifest.webmanifest b/refuel-ai-supplement-portrait-v5-4/manifest.webmanifest
+--- a/refuel-ai-supplement-portrait-v5-4/manifest.webmanifest
++++ b/refuel-ai-supplement-portrait-v5-4/manifest.webmanifest
+@@ -3,7 +3,7 @@
+   "name": "Refuel AI Supplements",
+   "short_name": "Refuel AI Supplements",
+   "description": "Trusted supplement shopping and AI-guided product education.",
+-  "start_url": "/?source=pwa&app_version=6.4.58",
++  "start_url": "/?source=pwa&app_version=6.4.59",
+   "scope": "/",
+   "display": "standalone",
+   "background_color": "#020708",
+diff --git a/refuel-ai-supplement-portrait-v5-4/sw.js b/refuel-ai-supplement-portrait-v5-4/sw.js
+--- a/refuel-ai-supplement-portrait-v5-4/sw.js
++++ b/refuel-ai-supplement-portrait-v5-4/sw.js
+@@ -1,4 +1,4 @@
+-// Refuel AI Supplements 6.4.58: refresh the mobile shell and never replay a cached storefront/customer page.
++// Refuel AI Supplements 6.4.59: refresh the mobile shell and never replay a cached storefront/customer page.
+ 
+ self.addEventListener('install', event => {
+   event.waitUntil(self.skipWaiting());
+diff --git a/refuel-ai-supplement-portrait-v5-4/UPDATE_V6.4.59.txt b/refuel-ai-supplement-portrait-v5-4/UPDATE_V6.4.59.txt
+new file mode 100644
+--- /dev/null
++++ b/refuel-ai-supplement-portrait-v5-4/UPDATE_V6.4.59.txt
+@@ -0,0 +1,13 @@
++Refuel AI Supplements V6.4.59 — installed PWA navigation and AI popup
++
++In the installed phone PWA, swipe left from the Home/Offer of the Month
++screen to Shop, then swipe left from Shop to open the AI Coach popup.
++Swipe right in Shop to return to Home. The AI button opens the same popup.
++
++The AI Coach is a centered, dismissible dialog over the current screen.
++Close it with the X, by tapping outside, or with Escape on a keyboard.
++Its Tools button opens the existing AI action menu. Trust remains available
++from the bottom navigation. The mobile browser remains a regular webpage.
++
++This update preserves the "sale for month" WooCommerce category selection
++and the live product refresh from V6.4.58.
