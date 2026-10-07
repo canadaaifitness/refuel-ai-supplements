@@ -1,0 +1,303 @@
+diff -ruN a/refuel-ai-supplement-portrait-v5-4/UPDATE_V6.4.62.txt b/refuel-ai-supplement-portrait-v5-4/UPDATE_V6.4.62.txt
+--- a/refuel-ai-supplement-portrait-v5-4/UPDATE_V6.4.62.txt	1970-01-01 01:00:00.000000000 +0100
++++ b/refuel-ai-supplement-portrait-v5-4/UPDATE_V6.4.62.txt	2026-10-07 23:01:41.107479281 +0200
+@@ -0,0 +1,5 @@
++Refuel AI Supplements V6.4.62 — product viewing, inventory and flavor choices
++
++Product pages and PWA quick view now show a short-lived count of active viewers, actual WooCommerce stock quantities when inventory is managed, and a favorites heart saved on this device. Variable products show button choices driven by WooCommerce attributes and variation availability; the native form still handles selection and cart validation. Simple products without configured variations do not invent flavor options. The viewer count is measured from active browser tabs seen within the last 90 seconds and only appears when its live request succeeds. Stock and viewer counts refresh while the product is open.
++
++Install this ZIP as a theme update in WordPress. To show flavor choices, configure the product as a variable product with Flavor attributes and variations in WooCommerce. This update does not change product records. Includes all changes through V6.4.61.
+diff -ruN a/refuel-ai-supplement-portrait-v5-4/assets/porcelain-sky.css b/refuel-ai-supplement-portrait-v5-4/assets/porcelain-sky.css
+--- a/refuel-ai-supplement-portrait-v5-4/assets/porcelain-sky.css	2026-10-07 22:13:12.000000000 +0200
++++ b/refuel-ai-supplement-portrait-v5-4/assets/porcelain-sky.css	2026-10-07 23:01:41.067222488 +0200
+@@ -568,3 +568,12 @@
+ }
+ .refuel-trust-dialog .expert-status,
+ .refuel-trust-dialog .refuel-trust-safety-note { color:#465761 !important; }
++
++/* Product inventory, viewers and favourites on the light storefront. */
++.refuel-wc-main .refuel-product-signals { color:#272129; }
++.refuel-wc-main .refuel-product-signals .refuel-viewers { color:#526975; }
++.refuel-wc-main .refuel-product-signals .refuel-viewers span:first-child { color:#246F95; }
++.refuel-wc-main .refuel-product-favourite { color:#272129; background:#FFFFFF; border-color:rgba(36,111,149,.3); }
++.refuel-wc-main .refuel-product-favourite[aria-pressed="true"] { background:#E2F2F8; border-color:#246F95; }
++.refuel-wc-main .refuel-variation-choices button { background:#FFFFFF !important; color:#272129 !important; border-color:rgba(36,111,149,.28) !important; }
++.refuel-wc-main .refuel-variation-choices button[aria-pressed="true"] { background:#E2F2F8 !important; border-color:#246F95 !important; }
+diff -ruN a/refuel-ai-supplement-portrait-v5-4/front-page.php b/refuel-ai-supplement-portrait-v5-4/front-page.php
+--- a/refuel-ai-supplement-portrait-v5-4/front-page.php	2026-10-07 22:44:52.000000000 +0200
++++ b/refuel-ai-supplement-portrait-v5-4/front-page.php	2026-10-07 23:01:59.123734639 +0200
+@@ -13412,6 +13412,11 @@
+           card.dataset.v6SavedHidden = savedOnly && !active ? 'true' : 'false';
+         });
+       };
++      window.addEventListener('storage', event => {
++        if (event.key !== 'refuelWishlistV6') return;
++        try { saved = new Set(JSON.parse(event.newValue || '[]')); } catch (_) { saved = new Set(); }
++        updateSavedUi();
++      });
+       const toggleSavedFilter = () => {
+         savedOnly = !savedOnly;
+         updateSavedUi();
+@@ -13525,7 +13530,7 @@
+         }
+         const freshPage = new URL(window.location.href);
+         freshPage.searchParams.set('source', 'pwa');
+-        freshPage.searchParams.set('app_version', '6.4.61');
++        freshPage.searchParams.set('app_version', '6.4.62');
+         freshPage.searchParams.set('_refresh', String(Date.now()));
+         window.location.replace(freshPage.href);
+       });
+diff -ruN a/refuel-ai-supplement-portrait-v5-4/functions.php b/refuel-ai-supplement-portrait-v5-4/functions.php
+--- a/refuel-ai-supplement-portrait-v5-4/functions.php	2026-10-07 22:43:22.000000000 +0200
++++ b/refuel-ai-supplement-portrait-v5-4/functions.php	2026-10-07 23:01:56.807704062 +0200
+@@ -97,8 +97,8 @@
+ }, 9);
+ 
+ add_action('wp_enqueue_scripts', function () {
+-    wp_enqueue_style('refuel-ai-supplements-live-style', get_stylesheet_uri(), [], '6.4.61');
+-    wp_enqueue_style('refuel-porcelain-sky', get_theme_file_uri('/assets/porcelain-sky.css'), ['refuel-ai-supplements-live-style'], '6.4.61');
++    wp_enqueue_style('refuel-ai-supplements-live-style', get_stylesheet_uri(), [], '6.4.62');
++    wp_enqueue_style('refuel-porcelain-sky', get_theme_file_uri('/assets/porcelain-sky.css'), ['refuel-ai-supplements-live-style'], '6.4.62');
+ });
+ 
+ // Keep the full WooCommerce product form and variation handling inside the
+@@ -140,6 +140,57 @@
+     if ($details) { echo '<div class="refuel-quick-attributes">' . implode('', $details) . '</div>'; }
+ }, 25);
+ 
++// Product signals use WooCommerce inventory and a short-lived count of active
++// browser tabs. Never fabricate inventory or a marketing viewer number.
++add_action('woocommerce_single_product_summary', function () {
++    global $product;
++    if (!$product || !in_array($product->get_type(), ['simple', 'variable'], true)) { return; }
++    $quantity = $product->is_type('simple') && $product->managing_stock() && !$product->backorders_allowed()
++        ? $product->get_stock_quantity() : null;
++    echo '<div class="refuel-product-signals" data-product-id="' . esc_attr($product->get_id()) . '" data-ajax-url="' . esc_url(admin_url('admin-ajax.php')) . '">';
++    echo '<p class="refuel-viewers" hidden aria-live="polite"><span aria-hidden="true">◉</span> <span class="refuel-viewer-number"></span> viewing this product now</p>';
++    echo '<div class="refuel-stock-signal" aria-live="polite"><strong class="refuel-stock-label">';
++    if (!$product->is_in_stock()) { echo 'Out of stock'; }
++    elseif (null !== $quantity) { echo esc_html($quantity <= 10 ? 'Only ' . max(0, $quantity) . ' left in stock' : $quantity . ' in stock'); }
++    elseif ($product->is_type('variable')) { echo 'Choose an option to check availability'; }
++    else { echo 'Available in shop'; }
++    echo '</strong><span class="refuel-stock-track"' . (null === $quantity ? ' hidden' : '') . '><span style="width:' . esc_attr(null === $quantity ? 0 : min(100, max(0, $quantity) * 5)) . '%"></span></span></div>';
++    echo '<button class="refuel-product-favourite" type="button" data-name="' . esc_attr(strtolower(trim($product->get_name()))) . '" aria-pressed="false"><span aria-hidden="true">♡</span> Save to favourites</button>';
++    echo '</div>';
++}, 11);
++
++add_action('wp_ajax_nopriv_refuel_product_presence', 'refuel_product_presence');
++add_action('wp_ajax_refuel_product_presence', 'refuel_product_presence');
++function refuel_product_presence() {
++    if (!function_exists('wc_get_product')) { wp_send_json_error('WooCommerce unavailable', 503); }
++    $id = isset($_POST['product_id']) ? absint(wp_unslash($_POST['product_id'])) : 0;
++    $visitor = isset($_POST['visitor']) ? sanitize_text_field(wp_unslash($_POST['visitor'])) : '';
++    if (!preg_match('/^[a-f0-9]{32}$/', $visitor)) { wp_send_json_error('Invalid visitor', 400); }
++    $product = wc_get_product($id);
++    if (!$product || 'publish' !== get_post_status($id) || !in_array($product->get_type(), ['simple', 'variable'], true)) {
++        wp_send_json_error('Product unavailable', 404);
++    }
++    $variation_id = isset($_POST['variation_id']) ? absint(wp_unslash($_POST['variation_id'])) : 0;
++    $stock_product = $variation_id ? wc_get_product($variation_id) : $product;
++    if (!$stock_product || ($variation_id && (!$stock_product->is_type('variation') || $stock_product->get_parent_id() !== $id))) {
++        wp_send_json_error('Invalid variation', 400);
++    }
++    $key = 'refuel_presence_' . $id;
++    $now = time();
++    $active = get_transient($key);
++    if (!is_array($active)) { $active = []; }
++    $active = array_filter($active, static function ($seen) use ($now) { return is_numeric($seen) && $seen > $now - 90; });
++    $active[$visitor] = $now;
++    if (count($active) > 250) { arsort($active); $active = array_slice($active, 0, 250, true); }
++    set_transient($key, $active, 120);
++    wp_send_json_success([
++        'viewers' => count($active),
++        'in_stock' => $stock_product->is_in_stock(),
++        'stock_quantity' => $stock_product->managing_stock() && !$stock_product->backorders_allowed()
++            ? $stock_product->get_stock_quantity() : null,
++    ]);
++}
++
+ /**
+  * Serve the service worker from the site root so it can control the complete
+  * storefront instead of being restricted to the theme directory.
+@@ -167,10 +218,10 @@
+     $icon = get_theme_file_uri('/assets/refuel-app-icon-192.png');
+     $touch_icon = get_theme_file_uri('/assets/refuel-app-icon-192.png');
+     ?>
+-    <link rel="manifest" href="<?php echo esc_url($manifest); ?>?v=6.4.61">
+-    <meta name="refuel-theme-version" content="6.4.61">
+-    <link rel="icon" href="<?php echo esc_url($icon); ?>?v=6.4.61" type="image/png" sizes="192x192">
+-    <link rel="apple-touch-icon" sizes="192x192" href="<?php echo esc_url($touch_icon); ?>?v=6.4.61">
++    <link rel="manifest" href="<?php echo esc_url($manifest); ?>?v=6.4.62">
++    <meta name="refuel-theme-version" content="6.4.62">
++    <link rel="icon" href="<?php echo esc_url($icon); ?>?v=6.4.62" type="image/png" sizes="192x192">
++    <link rel="apple-touch-icon" sizes="192x192" href="<?php echo esc_url($touch_icon); ?>?v=6.4.62">
+     <meta name="theme-color" content="#F6F3F0">
+     <meta name="mobile-web-app-capable" content="yes">
+     <meta name="apple-mobile-web-app-capable" content="yes">
+@@ -313,7 +364,7 @@
+ add_action('wp_footer', function () {
+     $worker_url = add_query_arg([
+         'refuel_pwa_worker' => '1',
+-        'v'                 => '6.4.61',
++        'v'                 => '6.4.62',
+     ], home_url('/'));
+     ?>
+     <script id="refuel-theme-loader-and-pwa-v4">
+diff -ruN a/refuel-ai-supplement-portrait-v5-4/manifest.webmanifest b/refuel-ai-supplement-portrait-v5-4/manifest.webmanifest
+--- a/refuel-ai-supplement-portrait-v5-4/manifest.webmanifest	2026-10-07 22:43:22.000000000 +0200
++++ b/refuel-ai-supplement-portrait-v5-4/manifest.webmanifest	2026-10-07 23:01:41.107393702 +0200
+@@ -3,7 +3,7 @@
+   "name": "Refuel AI Supplements",
+   "short_name": "Refuel AI Supplements",
+   "description": "Trusted supplement shopping and AI-guided product education.",
+-  "start_url": "/?source=pwa&app_version=6.4.61",
++  "start_url": "/?source=pwa&app_version=6.4.62",
+   "scope": "/",
+   "display": "standalone",
+   "background_color": "#020708",
+diff -ruN a/refuel-ai-supplement-portrait-v5-4/style.css b/refuel-ai-supplement-portrait-v5-4/style.css
+--- a/refuel-ai-supplement-portrait-v5-4/style.css	2026-10-07 22:43:22.000000000 +0200
++++ b/refuel-ai-supplement-portrait-v5-4/style.css	2026-10-07 23:03:30.797009924 +0200
+@@ -1,9 +1,9 @@
+ /*
+-Theme Name: Refuel AI Supplements Mobile Chrome Fixed V6.4.61
++Theme Name: Refuel AI Supplements Mobile Chrome Fixed V6.4.62
+ Theme URI: https://refuelaisupplements.com/
+ Author: Refuel AI
+ Description: Custom Refuel AI Supplements landing page theme with WooCommerce shop, cart and checkout support.
+-Version: 6.4.61
++Version: 6.4.62
+ Text Domain: refuel-ai-supplements-gateway-safe-v5-6
+ Requires at least: 6.0
+ Tested up to: 7.1
+@@ -159,6 +159,23 @@
+ .refuel-variation-choices button[aria-pressed="true"] { border-color:var(--refuel-cyan); box-shadow:0 0 0 1px var(--refuel-cyan); }
+ .refuel-variation-choices button:disabled { opacity:.38; cursor:not-allowed; text-decoration:line-through; }
+ .refuel-variation-choices button:focus-visible { outline:2px solid var(--refuel-mint); outline-offset:2px; }
++/* Live product signals and WooCommerce-backed variation choices. */
++.refuel-product-signals { display:grid; gap:12px; margin:14px 0 20px; color:var(--refuel-text); }
++.refuel-product-signals .refuel-viewers { margin:0; font-size:.9rem; color:var(--refuel-muted); }
++.refuel-product-signals [hidden] { display:none !important; }
++.refuel-product-signals .refuel-viewers span:first-child { color:var(--refuel-cyan); font-size:1.2rem; }
++.refuel-product-signals .refuel-stock-signal { display:grid; gap:9px; font-size:.92rem; }
++.refuel-product-signals .refuel-stock-track { width:min(100%,360px); height:7px; border-radius:99px; background:rgba(120,140,150,.2); overflow:hidden; }
++.refuel-product-signals .refuel-stock-track > span { display:block; height:100%; border-radius:inherit; background:#df6570; }
++.refuel-product-signals.is-sold-out .refuel-stock-label { color:#ba384a; }
++.refuel-product-favourite { justify-self:start; min-height:40px; padding:8px 14px; border:1px solid var(--refuel-line); border-radius:12px; background:transparent; color:var(--refuel-text); font:inherit; font-size:.88rem; cursor:pointer; }
++.refuel-product-favourite[aria-pressed="true"] { border-color:var(--refuel-cyan); }
++.refuel-product-favourite:focus-visible { outline:2px solid var(--refuel-cyan); outline-offset:2px; }
++.refuel-wc-main .woocommerce div.product form.cart .variations { width:100%; }
++.refuel-wc-main .woocommerce div.product .summary p.stock { display:none; }
++.refuel-wc-main .woocommerce div.product form.cart .variations select.refuel-native-variation-select { position:absolute; width:1px; height:1px; padding:0; clip-path:inset(50%); overflow:hidden; }
++.refuel-wc-main .woocommerce div.product form.cart .variations label { display:block; margin-bottom:8px; }
++.refuel-wc-main .woocommerce div.product form.cart .variations .refuel-variation-choices button { min-height:44px; }
+ body.refuel-quick-view .woocommerce div.product form.cart .quantity .qty { min-height:44px; width:72px; border:1px solid var(--refuel-line); border-radius:10px; color:var(--refuel-text); background:#071416; }
+ body.refuel-quick-view .woocommerce div.product .woocommerce-tabs,
+ body.refuel-quick-view .woocommerce div.product .related.products,
+diff -ruN a/refuel-ai-supplement-portrait-v5-4/sw.js b/refuel-ai-supplement-portrait-v5-4/sw.js
+--- a/refuel-ai-supplement-portrait-v5-4/sw.js	2026-10-07 22:43:22.000000000 +0200
++++ b/refuel-ai-supplement-portrait-v5-4/sw.js	2026-10-07 23:01:41.107313972 +0200
+@@ -1,4 +1,4 @@
+-// Refuel AI Supplements 6.4.61: refresh the mobile shell and never replay a cached storefront/customer page.
++// Refuel AI Supplements 6.4.62: refresh the mobile shell and never replay a cached storefront/customer page.
+ 
+ self.addEventListener('install', event => {
+   event.waitUntil(self.skipWaiting());
+diff -ruN a/refuel-ai-supplement-portrait-v5-4/woocommerce.php b/refuel-ai-supplement-portrait-v5-4/woocommerce.php
+--- a/refuel-ai-supplement-portrait-v5-4/woocommerce.php	2026-10-05 19:28:00.000000000 +0200
++++ b/refuel-ai-supplement-portrait-v5-4/woocommerce.php	2026-10-07 23:03:51.857303123 +0200
+@@ -11,7 +11,7 @@
+     <?php if (function_exists('woocommerce_content')) { woocommerce_content(); } else { echo '<div class="refuel-wc-panel">Please install and activate WooCommerce.</div>'; } ?>
+   </div>
+ </main>
+-<?php if (refuel_is_product_quick_view()) : ?>
++<?php if (function_exists('is_product') && is_product()) : ?>
+ <script id="refuel-quick-view-variations">
+ (() => {
+   // Buttons mirror WooCommerce's native selects. Woo remains responsible for
+@@ -43,7 +43,84 @@
+     render();
+   });
+ 
+-  document.addEventListener('click', event => {
++  const signals = document.querySelector('.refuel-product-signals');
++  if (signals) {
++    const viewerRow = signals.querySelector('.refuel-viewers');
++    const viewerNumber = signals.querySelector('.refuel-viewer-number');
++    const stockLabel = signals.querySelector('.refuel-stock-label');
++    const stockTrack = signals.querySelector('.refuel-stock-track');
++    const stockFill = stockTrack.querySelector('span');
++    const favourite = signals.querySelector('.refuel-product-favourite');
++    const form = document.querySelector('form.variations_form');
++    let variationId = 0;
++    let visitor = '';
++    try {
++      visitor = sessionStorage.getItem('refuelProductVisitor') || '';
++      if (!/^[a-f0-9]{32}$/.test(visitor)) {
++        const bytes = new Uint8Array(16);
++        crypto.getRandomValues(bytes);
++        visitor = Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
++        sessionStorage.setItem('refuelProductVisitor', visitor);
++      }
++    } catch (_) { /* Inventory and favorites still work without session storage. */ }
++    const renderStock = (available, quantity) => {
++      const count = quantity === null || quantity === '' || !Number.isFinite(Number(quantity)) ? null : Math.max(0, Number(quantity));
++      stockLabel.textContent = !available ? 'Out of stock' : count !== null ?
++        (count <= 10 ? `Only ${count} left in stock` : `${count} in stock`) : 'Available in shop';
++      stockTrack.hidden = !available || count === null;
++      if (count !== null) stockFill.style.width = `${Math.min(100, count * 5)}%`;
++      signals.classList.toggle('is-sold-out', !available);
++    };
++    const refresh = async () => {
++      if (!visitor || document.hidden) return;
++      const requestedVariationId = variationId;
++      const payload = new URLSearchParams({action:'refuel_product_presence', product_id:signals.dataset.productId, visitor});
++      if (requestedVariationId) payload.set('variation_id', String(requestedVariationId));
++      try {
++        const response = await fetch(signals.dataset.ajaxUrl, {method:'POST', body:payload, credentials:'same-origin', cache:'no-store'});
++        if (!response.ok) return;
++        const result = await response.json();
++        if (!result.success || !result.data) return;
++        viewerNumber.textContent = String(result.data.viewers);
++        viewerRow.hidden = false;
++        if ((!form || requestedVariationId) && variationId === requestedVariationId)
++          renderStock(result.data.in_stock, result.data.stock_quantity);
++      } catch (_) { viewerRow.hidden = true; }
++    };
++    if (window.jQuery && form) {
++      window.jQuery(form).on('found_variation', (_event, variation) => {
++        variationId = Number(variation.variation_id) || 0;
++        renderStock(variation.is_in_stock, null);
++        refresh();
++      }).on('reset_data hide_variation', () => {
++        variationId = 0;
++        stockLabel.textContent = 'Choose an option to check availability';
++        stockTrack.hidden = true;
++      });
++    }
++    refresh();
++    setInterval(refresh, 30000);
++    document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
++
++    let saved = [];
++    try { saved = JSON.parse(localStorage.getItem('refuelWishlistV6') || '[]'); } catch (_) {}
++    if (!Array.isArray(saved)) saved = [];
++    const name = favourite.dataset.name;
++    const updateFavourite = () => {
++      const active = saved.includes(name);
++      favourite.setAttribute('aria-pressed', String(active));
++      favourite.querySelector('span').textContent = active ? '♥' : '♡';
++      favourite.lastChild.textContent = active ? ' Saved to favourites' : ' Save to favourites';
++    };
++    favourite.addEventListener('click', () => {
++      saved = saved.includes(name) ? saved.filter(item => item !== name) : [...saved, name];
++      try { localStorage.setItem('refuelWishlistV6', JSON.stringify(saved)); } catch (_) {}
++      updateFavourite();
++    });
++    updateFavourite();
++  }
++
++  if (document.body.classList.contains('refuel-quick-view')) document.addEventListener('click', event => {
+     const link = event.target.closest('a');
+     if (!link || link.getAttribute('target') || link.hash === '#reviews') return;
+     const destination = new URL(link.href, location.href);
