@@ -179,6 +179,15 @@ diff --git a/refuel-ai-supplement-portrait-v5-4/front-page.php b/refuel-ai-suppl
            return;
          }
  
+@@ -13169,7 +13223,7 @@
+         if (menuSheet?.classList.contains('show')) closeSheets();
+         else openSheet(menuSheet);
+       });
+-      qs('#v6HomeAi')?.addEventListener('click', () => openSheet(qs('#v6AiSheet')));
++      qs('#v6HomeAi')?.addEventListener('click', () => qs('#chatLauncher')?.click());
+ 
+       const activateTab = name => {
+         const button = qs(`[data-mobile-target="${name}"]`);
 @@ -13385,7 +13439,7 @@
          }
          const freshPage = new URL(window.location.href);
@@ -352,6 +361,15 @@ diff --git a/refuel-ai-supplement-portrait-v5-4/page-home.php b/refuel-ai-supple
            return;
          }
  
+@@ -13135,7 +13189,7 @@
+         if (menuSheet?.classList.contains('show')) closeSheets();
+         else openSheet(menuSheet);
+       });
+-      qs('#v6HomeAi')?.addEventListener('click', () => openSheet(qs('#v6AiSheet')));
++      qs('#v6HomeAi')?.addEventListener('click', () => qs('#chatLauncher')?.click());
+ 
+       const activateTab = name => {
+         const button = qs(`[data-mobile-target="${name}"]`);
 @@ -13351,7 +13405,7 @@
          }
          const freshPage = new URL(window.location.href);
@@ -525,6 +543,15 @@ diff --git a/refuel-ai-supplement-portrait-v5-4/index.php b/refuel-ai-supplement
            return;
          }
  
+@@ -13135,7 +13189,7 @@
+         if (menuSheet?.classList.contains('show')) closeSheets();
+         else openSheet(menuSheet);
+       });
+-      qs('#v6HomeAi')?.addEventListener('click', () => openSheet(qs('#v6AiSheet')));
++      qs('#v6HomeAi')?.addEventListener('click', () => qs('#chatLauncher')?.click());
+ 
+       const activateTab = name => {
+         const button = qs(`[data-mobile-target="${name}"]`);
 @@ -13351,7 +13405,7 @@
          }
          const freshPage = new URL(window.location.href);
