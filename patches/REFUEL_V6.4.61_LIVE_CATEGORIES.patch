@@ -1,0 +1,1436 @@
+diff --git a/refuel-ai-supplement-portrait-v5-4/UPDATE_V6.4.61.txt b/refuel-ai-supplement-portrait-v5-4/UPDATE_V6.4.61.txt
+new file mode 100644
+index 0000000..d86e609
+--- /dev/null
++++ b/refuel-ai-supplement-portrait-v5-4/UPDATE_V6.4.61.txt
+@@ -0,0 +1,3 @@
++Refuel AI Supplements V6.4.61 — live WooCommerce category display
++
++Shop by Category tiles now follow populated WooCommerce product categories and open their real category archives. The header no longer lists empty categories. Homepage product filters match exact WooCommerce term slugs, product labels use assigned terms, and the live catalogue refresh updates cards and category controls. Keeps V6.4.59 PWA navigation and V6.4.60 dialog contrast fixes.
+diff --git a/refuel-ai-supplement-portrait-v5-4/front-page.php b/refuel-ai-supplement-portrait-v5-4/front-page.php
+index 22efee0..dde2454 100644
+--- a/refuel-ai-supplement-portrait-v5-4/front-page.php
++++ b/refuel-ai-supplement-portrait-v5-4/front-page.php
+@@ -10507,8 +10507,10 @@
+       <a href="<?php echo esc_url(refuel_woo_shop_url()); ?>">View all products →</a>
+     </div>
+     <div class="refuel-quick-grid">
+-      <?php foreach (['Protein', 'Creatine', 'Pre-Workout', 'Vitamins', 'Accessories'] as $category_label) : ?>
+-        <a class="refuel-quick-tile" href="<?php echo esc_url(add_query_arg(['s' => $category_label, 'post_type' => 'product'], refuel_woo_shop_url())); ?>"><?php echo esc_html($category_label); ?><span aria-hidden="true">→</span></a>
++      <?php foreach (refuel_active_product_categories() as $term) :
++        $category_url = get_term_link($term);
++        if (is_wp_error($category_url)) { continue; } ?>
++        <a class="refuel-quick-tile" data-category-slug="<?php echo esc_attr($term->slug); ?>" href="<?php echo esc_url($category_url); ?>"><?php echo esc_html($term->name); ?><span aria-hidden="true">→</span></a>
+       <?php endforeach; ?>
+     </div>
+   </div>
+@@ -10603,8 +10605,10 @@
+             $refuel_item['brand'] = $refuel_brand;
+             $refuel_item['brandLabel'] = $refuel_brand_label;
+             $refuel_item['type'] = $refuel_type;
+-            $refuel_item['category'] = in_array($refuel_type, ['whey', 'isolate', 'casein', 'blend', 'lean'], true) ? 'protein' :
+-              ('creatine' === $refuel_type ? 'creatine' : ('vitamins' === $refuel_type ? 'vitamins' : 'performance'));
++            $refuel_slugs = $refuel_item['categories'] ?? [];
++            $refuel_item['category'] = in_array('protein', $refuel_slugs, true) ? 'protein' :
++              (in_array('creatine', $refuel_slugs, true) ? 'creatine' :
++              (in_array('vitamins', $refuel_slugs, true) ? 'vitamins' : 'performance'));
+           }
+           unset($refuel_item);
+         ?>
+@@ -10648,18 +10652,9 @@
+         <div class="category-shop-toolbar reveal">
+           <div class="category-shop-filters" aria-label="Filter products by category">
+             <button class="category-shop-button active" type="button" data-shop-type="all">All Products</button>
+-            <button class="category-shop-button" type="button" data-shop-type="whey">Whey Protein</button>
+-            <button class="category-shop-button" type="button" data-shop-type="isolate">Whey Isolate</button>
+-            <button class="category-shop-button" type="button" data-shop-type="casein">Casein</button>
+-            <button class="category-shop-button" type="button" data-shop-type="blend">Protein Blend</button>
+-            <button class="category-shop-button" type="button" data-shop-type="lean">Lean Protein</button>
+-            <button class="category-shop-button" type="button" data-shop-type="creatine">Creatine</button>
+-            <button class="category-shop-button" type="button" data-shop-type="preworkout">Pre-Workout</button>
+-            <button class="category-shop-button" type="button" data-shop-type="amino">Amino Acids</button>
+-            <button class="category-shop-button" type="button" data-shop-type="vitamins">Vitamins</button>
+-            <button class="category-shop-button" type="button" data-shop-type="weight">Weight Management</button>
+-            <button class="category-shop-button" type="button" data-shop-type="support">Performance Support</button>
+-            <button class="category-shop-button" type="button" data-shop-type="pump">Pump Support</button>
++            <?php foreach (refuel_active_product_categories() as $term) : ?>
++            <button class="category-shop-button" type="button" data-shop-type="<?php echo esc_attr($term->slug); ?>"><?php echo esc_html($term->name); ?></button>
++            <?php endforeach; ?>
+           </div>
+           <div class="shop-result-summary">
+             <strong id="shopResultCount"><?php echo count($refuel_grid_products); ?> products</strong>
+@@ -10671,6 +10666,7 @@
+           <?php foreach ($refuel_grid_products as $refuel_item) : ?>
+           <article class="product-card real-product-card reveal"
+             data-category="<?php echo esc_attr($refuel_item['category']); ?>"
++            data-categories="<?php echo esc_attr(implode(' ', $refuel_item['categories'] ?? [])); ?>"
+             data-type="<?php echo esc_attr($refuel_item['type']); ?>"
+             data-brand="<?php echo esc_attr($refuel_item['brand']); ?>"
+             data-id="<?php echo esc_attr(strtolower(trim($refuel_item['name']))); ?>"
+@@ -10690,7 +10686,7 @@
+               <h3><?php echo esc_html($refuel_item['name']); ?></h3>
+               <div class="rating">See product details</div>
+               <div class="product-meta">
+-                <span class="meta-chip type-chip"><?php echo esc_html(ucwords(str_replace(['preworkout', 'amino'], ['Pre-Workout', 'Amino Acids'], $refuel_item['type']))); ?></span>
++                <span class="meta-chip type-chip"><?php echo esc_html($refuel_item['categoryLabel']); ?></span>
+                 <span class="meta-chip"><?php echo esc_html($refuel_item['stockText']); ?></span>
+               </div>
+               <div class="product-bottom">
+@@ -10712,6 +10708,17 @@
+           <?php endforeach; ?>
+           <?php if (!$refuel_grid_products) : ?><p class="refuel-shop-unavailable">No published WooCommerce products are available yet.</p><?php endif; ?>
+         </div>
++        <template id="refuel-live-product-card-template">
++          <article class="product-card real-product-card" data-brand="other">
++            <span class="product-badge">SHOP PRODUCT</span>
++            <div class="product-visual real-product-visual" role="button" tabindex="0"><span class="product-brand-corner">Other Brands</span><img decoding="async" loading="lazy" class="real-product-image" alt=""></div>
++            <div class="product-body"><span class="micro-label">Other Brands</span><h3></h3><div class="rating">See product details</div>
++              <div class="product-meta"><span class="meta-chip type-chip"></span><span class="meta-chip stock-chip"></span></div>
++              <div class="product-bottom"><div class="price"><strong></strong><small></small></div><div class="product-actions"><button class="square-btn add-btn" type="button">+</button></div></div>
++            </div>
++            <div class="refuel-card-hover" aria-label="Quick product preview"><button type="button" class="refuel-card-hover-close" aria-label="Close product preview">✕</button><img loading="lazy" alt=""><h3></h3><strong class="refuel-card-hover-price"></strong><p>View available options and current stock for this product.</p><a class="refuel-card-preview-action" data-refuel-preview-open>View product</a></div>
++          </article>
++        </template>
+ 
+         <p class="refuel-live-shop-link"><a href="<?php echo esc_url(refuel_woo_shop_url()); ?>">Browse the live shop for the full catalogue and current availability →</a></p>
+         <div class="catalogue-more-wrap reveal">
+@@ -11248,12 +11255,89 @@
+   <script type="application/json" id="refuel-live-catalog"><?php echo wp_json_encode(refuel_catalog_data(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?></script>
+   <script id="refuel-catalog-sync">
+     (() => {
+-      const cards = [...document.querySelectorAll('#productGrid .product-card')];
++      let cards = [...document.querySelectorAll('#productGrid .product-card')];
++      const productGrid = document.getElementById('productGrid');
++      const productTemplate = document.getElementById('refuel-live-product-card-template');
+       const shopUrl = "<?php echo esc_js(refuel_woo_shop_url()); ?>";
+       const endpoint = "<?php echo esc_url(admin_url('admin-ajax.php?action=refuel_live_catalog')); ?>";
++      function syncCategoryControls(live) {
++        const filters = document.querySelector('.category-shop-filters');
++        const quickGrid = document.querySelector('.refuel-quick-grid');
++        if (!filters || !quickGrid) return;
++        const terms = new Map();
++        Object.values(live).forEach(item => {
++          (item?.categoryTerms || []).forEach(term => {
++            if (term.slug && term.name && term.slug !== 'uncategorized') terms.set(term.slug, term);
++          });
++        });
++        if (!terms.size) return;
++        const categories = [...terms.values()].sort((a, b) => a.name.localeCompare(b.name));
++        const current = [...filters.querySelectorAll('button[data-shop-type]:not([data-shop-type="all"])')]
++          .map(button => button.dataset.shopType).join('|');
++        if (current === categories.map(term => term.slug).join('|')) return;
++        const all = filters.querySelector('[data-shop-type="all"]');
++        filters.replaceChildren(all);
++        categories.forEach(term => {
++          const button = document.createElement('button');
++          button.className = 'category-shop-button';
++          button.type = 'button';
++          button.dataset.shopType = term.slug;
++          button.textContent = term.name;
++          filters.appendChild(button);
++        });
++        quickGrid.replaceChildren();
++        categories.forEach(term => {
++          if (!term.url) return;
++          const link = document.createElement('a');
++          link.className = 'refuel-quick-tile';
++          link.dataset.categorySlug = term.slug;
++          link.href = term.url;
++          link.append(document.createTextNode(term.name));
++          const arrow = document.createElement('span');
++          arrow.setAttribute('aria-hidden', 'true');
++          arrow.textContent = '→';
++          link.append(arrow);
++          quickGrid.appendChild(link);
++        });
++      }
+       function applyCatalog(live) {
+         const productsById = {};
+         Object.values(live).forEach(item => { if (item && item.wooId) productsById[item.wooId] = item; });
++        if (Object.keys(productsById).length && productGrid && productTemplate) {
++          const existingIds = new Set(cards.map(card => Number(card.dataset.wooId)));
++          Object.values(productsById).forEach(item => {
++            if (existingIds.has(Number(item.wooId))) return;
++            const card = productTemplate.content.firstElementChild.cloneNode(true);
++            card.dataset.id = item.name.trim().toLowerCase();
++            card.dataset.name = item.name;
++            card.dataset.wooId = item.wooId;
++            card.dataset.purpose = 'See the product page for ingredients, instructions and availability.';
++            const name = item.name.toLowerCase();
++            const brands = [
++              ['rule-one', 'Rule One', /rule[ -]?1|rule one|\br1\b/],
++              ['muscletech', 'MuscleTech', /muscletech|nitro-tech/],
++              ['optimum', 'Optimum Nutrition', /optimum|gold standard/],
++              ['bpi', 'BPI Sports', /bpi/], ['bsn', 'BSN', /bsn/],
++              ['gat', 'GAT Sport', /gat sport/]
++            ];
++            const brand = brands.find(entry => entry[2].test(name));
++            if (brand) {
++              card.dataset.brand = brand[0];
++              card.querySelector('.product-brand-corner').textContent = brand[1];
++              card.querySelector('.micro-label').textContent = brand[1];
++            } else if (name.includes('kevin levrone')) {
++              card.querySelector('.product-brand-corner').textContent = 'Kevin Levrone';
++              card.querySelector('.micro-label').textContent = 'Kevin Levrone';
++            }
++            productGrid.appendChild(card);
++            existingIds.add(Number(item.wooId));
++          });
++          cards.forEach(card => {
++            if (!productsById[card.dataset.wooId]) card.remove();
++          });
++          cards = [...productGrid.querySelectorAll('.product-card')];
++          productGrid.querySelector('.refuel-shop-unavailable')?.remove();
++        }
+         cards.forEach(card => {
+           const key = card.dataset.id.trim().toLowerCase();
+           const item = productsById[card.dataset.wooId] || live[key] || live[card.dataset.name.trim().toLowerCase()];
+@@ -11269,6 +11353,14 @@
+           card.dataset.wooId = item.wooId || '';
+           card.dataset.wooType = item.wooType || '';
+           card.dataset.price = item.price === null ? '' : item.price;
++          const categories = Array.isArray(item.categories) ? item.categories : [];
++          card.dataset.categories = categories.join(' ');
++          card.dataset.category = categories.includes('protein') ? 'protein' :
++            categories.includes('creatine') ? 'creatine' : categories.includes('vitamins') ? 'vitamins' : 'performance';
++          card.querySelector('.type-chip').textContent = item.categoryLabel || 'Uncategorized';
++          const stockChip = card.querySelector('.product-meta .meta-chip:not(.type-chip)');
++          if (stockChip) stockChip.textContent = item.stockText || 'Available in shop';
++          card.querySelector('.real-product-visual').setAttribute('aria-label', 'View ' + item.name + ' product details');
+           card.dataset.inStock = item.inStock && item.purchasable ? '1' : '0';
+           card.querySelector('.product-body h3').textContent = item.name;
+           card.querySelector('.rating').textContent = 'See product details';
+@@ -11280,16 +11372,24 @@
+             preview.querySelector('.refuel-card-preview-action').href = item.url;
+             preview.querySelector('.refuel-card-preview-action').textContent = item.wooType === 'variable' ? 'Select options' : 'View product';
+             const previewImage = preview.querySelector('img');
+-            if (previewImage && item.image) previewImage.src = item.image;
++            if (previewImage) {
++              previewImage.hidden = !item.image;
++              if (item.image) { previewImage.src = item.image; previewImage.alt = item.name; }
++            }
+           }
+           card.querySelector('.price small').textContent = !item.inStock ? 'Out of stock' :
+             item.purchasable ? (item.stockText || 'Available in shop') : 'Check options in shop';
+           const image = card.querySelector('.real-product-image');
+-          if (item.image && image) image.src = item.image;
++          if (image) {
++            image.hidden = !item.image;
++            if (item.image) { image.src = item.image; image.alt = item.name; }
++          }
+           action.disabled = !item.inStock || !item.purchasable;
+           action.textContent = '+';
+           action.setAttribute('aria-label', 'Add ' + item.name);
+         });
++        syncCategoryControls(live);
++        window.refuelApplyProductFilters?.();
+         const offerGrid = document.querySelector('#monthlyOffer .monthly-offer-grid');
+         const offerTemplate = document.getElementById('refuel-monthly-offer-card-template');
+         if (offerGrid && offerTemplate && Object.keys(live).length) {
+@@ -12017,11 +12117,9 @@ const compactGoalProductMap = {
+ 
+     function filterProductsForGoal(goal) {
+       const allowed = compactGoalProductMap[goal] || [];
+-      const productCards = [...document.querySelectorAll('.product-card')];
+-
+-      productCards.forEach(card => {
+-        card.classList.toggle('hidden', allowed.length > 0 && !allowed.includes(card.dataset.category));
+-      });
++      activeShopGoal = goal || 'all';
++      catalogueExpanded = false;
++      applyBrandCategoryFilters();
+ 
+       document.querySelectorAll('.filter-btn').forEach(button => {
+         button.classList.remove('active');
+@@ -12054,7 +12152,12 @@ const compactGoalProductMap = {
+     });
+ 
+     document.getElementById('showAllGoalProducts').addEventListener('click', () => {
+-      document.querySelectorAll('.product-card').forEach(card => card.classList.remove('hidden'));
++      activeShopGoal = 'all';
++      activeShopBrand = 'all';
++      activeShopType = 'all';
++      catalogueExpanded = false;
++      brandShopButtons.forEach(button => button.classList.toggle('active', button.dataset.shopBrand === 'all'));
++      applyBrandCategoryFilters();
+       document.querySelectorAll('.hero-goal-chip').forEach(button => button.classList.remove('active'));
+       document.getElementById('showAllGoalProducts').classList.add('active');
+       document.getElementById('heroGoalStatus').textContent = 'All products';
+@@ -12419,11 +12522,13 @@ const compactGoalProductMap = {
+ 
+ 
+     const brandShopButtons = [...document.querySelectorAll('.brand-shop-button')];
+-    const categoryShopButtons = [...document.querySelectorAll('.category-shop-button')];
+-    const shopProductCards = [...document.querySelectorAll('#productGrid .product-card')];
++    const categoryShopToolbar = document.querySelector('.category-shop-filters');
++    const categoryShopButtons = () => [...document.querySelectorAll('.category-shop-button')];
++    const shopProductCards = () => [...document.querySelectorAll('#productGrid .product-card')];
+ 
+     let activeShopBrand = 'all';
+     let activeShopType = 'all';
++    let activeShopGoal = 'all';
+ 
+     const shopBrandLabels = {
+       all: 'All brands',
+@@ -12436,21 +12541,8 @@ const compactGoalProductMap = {
+       other: 'Other Brands'
+     };
+ 
+-    const shopTypeLabels = {
+-      all: 'All categories',
+-      whey: 'Whey Protein',
+-      isolate: 'Whey Isolate',
+-      casein: 'Casein',
+-      blend: 'Protein Blend',
+-      lean: 'Lean Protein',
+-      creatine: 'Creatine',
+-      preworkout: 'Pre-Workout',
+-      amino: 'Amino Acids',
+-      vitamins: 'Vitamins',
+-      weight: 'Weight Management',
+-      support: 'Performance Support',
+-      pump: 'Pump Support'
+-    };
++    const shopTypeLabel = slug => slug === 'all' ? 'All categories' :
++      categoryShopButtons().find(button => button.dataset.shopType === slug)?.textContent.trim() || slug;
+ 
+     const catalogueMoreButton = document.getElementById('catalogueMoreButton');
+     const catalogueMoreNote = document.getElementById('catalogueMoreNote');
+@@ -12458,15 +12550,21 @@ const compactGoalProductMap = {
+     let catalogueExpanded = false;
+ 
+     function applyBrandCategoryFilters() {
+-      const matchingCards = shopProductCards.filter(card => {
++      if (activeShopType !== 'all' && !categoryShopButtons().some(button => button.dataset.shopType === activeShopType)) {
++        activeShopType = 'all';
++      }
++      categoryShopButtons().forEach(button => button.classList.toggle('active', button.dataset.shopType === activeShopType));
++      const matchingCards = shopProductCards().filter(card => {
+         const brandMatch =
+           activeShopBrand === 'all' || card.dataset.brand === activeShopBrand;
+-        const typeMatch =
+-          activeShopType === 'all' || card.dataset.type === activeShopType;
+-        return brandMatch && typeMatch;
++        const typeMatch = activeShopType === 'all' ||
++          (card.dataset.categories || '').split(/\s+/).includes(activeShopType);
++        const goalMatch = activeShopGoal === 'all' ||
++          (compactGoalProductMap[activeShopGoal] || []).includes(card.dataset.category);
++        return brandMatch && typeMatch && goalMatch;
+       });
+ 
+-      shopProductCards.forEach(card => {
++      shopProductCards().forEach(card => {
+         const matches = matchingCards.includes(card);
+         card.classList.toggle('hidden', !matches);
+         card.classList.remove('catalogue-collapsed');
+@@ -12486,7 +12584,8 @@ const compactGoalProductMap = {
+         (matchingCards.length === 1 ? ' product' : ' products');
+ 
+       document.getElementById('shopActiveFilter').textContent =
+-        shopBrandLabels[activeShopBrand] + ' • ' + shopTypeLabels[activeShopType];
++        shopBrandLabels[activeShopBrand] + ' • ' + shopTypeLabel(activeShopType) +
++        (activeShopGoal === 'all' ? '' : ' • ' + activeShopGoal + ' goal');
+ 
+       if (matchingCards.length > compactCatalogueLimit) {
+         catalogueMoreButton.hidden = false;
+@@ -12527,33 +12626,20 @@ const compactGoalProductMap = {
+       });
+     });
+ 
+-    categoryShopButtons.forEach(button => {
+-      button.addEventListener('click', () => {
+-        activeShopType = button.dataset.shopType;
+-        catalogueExpanded = false;
+-        categoryShopButtons.forEach(item =>
+-          item.classList.toggle('active', item === button)
+-        );
+-        applyBrandCategoryFilters();
+-      });
++    categoryShopToolbar.addEventListener('click', event => {
++      const button = event.target.closest('.category-shop-button');
++      if (!button || !categoryShopToolbar.contains(button)) return;
++      activeShopType = button.dataset.shopType;
++      catalogueExpanded = false;
++      categoryShopButtons().forEach(item => item.classList.toggle('active', item === button));
++      applyBrandCategoryFilters();
+     });
++    window.refuelApplyProductFilters = applyBrandCategoryFilters;
+ 
+     const initialAllBrandsButton =
+       document.querySelector('.brand-shop-button[data-shop-brand="all"]');
+     if (initialAllBrandsButton) initialAllBrandsButton.classList.add('active');
+ 
+-    document.querySelectorAll('.hero-goal-chip').forEach(button => {
+-      button.addEventListener('click', () => {
+-        setTimeout(() => {
+-          const visible = shopProductCards.filter(card => !card.classList.contains('hidden')).length;
+-          document.getElementById('shopResultCount').textContent =
+-            visible + (visible === 1 ? ' product' : ' products');
+-          document.getElementById('shopActiveFilter').textContent =
+-            'Filtered by selected fitness goal';
+-        }, 50);
+-      });
+-    });
+-
+     applyBrandCategoryFilters();
+ 
+ 
+@@ -13439,7 +13525,7 @@ const compactGoalProductMap = {
+         }
+         const freshPage = new URL(window.location.href);
+         freshPage.searchParams.set('source', 'pwa');
+-        freshPage.searchParams.set('app_version', '6.4.60');
++        freshPage.searchParams.set('app_version', '6.4.61');
+         freshPage.searchParams.set('_refresh', String(Date.now()));
+         window.location.replace(freshPage.href);
+       });
+@@ -13580,10 +13666,10 @@ const compactGoalProductMap = {
+ 
+     bindRedirect('#cartButton', refuelWoo.cart);
+     bindRedirect('#checkoutButton', refuelWoo.checkout);
+-    document.querySelectorAll('.add-btn').forEach(function (button) {
+-      button.setAttribute('title', 'Add this product to the WooCommerce cart');
+-      button.addEventListener('click', function (event) {
+-        var card = event.currentTarget.closest('[data-name]');
++    document.addEventListener('click', function (event) {
++        var button = event.target.closest('#productGrid .add-btn');
++        if (!button) return;
++        var card = button.closest('[data-name]');
+         var name = card ? card.getAttribute('data-name') : '';
+         var id = card ? Number(card.dataset.wooId) : 0;
+         var url;
+@@ -13598,8 +13684,7 @@ const compactGoalProductMap = {
+           url = (card && card.dataset.url) || (refuelWoo.shop + separator + 's=' + encodeURIComponent(name));
+         }
+         stopAndGo(event, url);
+-      }, true);
+-    });
++    }, true);
+   });
+ })();
+ </script>
+diff --git a/refuel-ai-supplement-portrait-v5-4/functions.php b/refuel-ai-supplement-portrait-v5-4/functions.php
+index 8db344e..3355941 100644
+--- a/refuel-ai-supplement-portrait-v5-4/functions.php
++++ b/refuel-ai-supplement-portrait-v5-4/functions.php
+@@ -97,8 +97,8 @@ add_action('template_redirect', function () {
+ }, 9);
+ 
+ add_action('wp_enqueue_scripts', function () {
+-    wp_enqueue_style('refuel-ai-supplements-live-style', get_stylesheet_uri(), [], '6.4.60');
+-    wp_enqueue_style('refuel-porcelain-sky', get_theme_file_uri('/assets/porcelain-sky.css'), ['refuel-ai-supplements-live-style'], '6.4.60');
++    wp_enqueue_style('refuel-ai-supplements-live-style', get_stylesheet_uri(), [], '6.4.61');
++    wp_enqueue_style('refuel-porcelain-sky', get_theme_file_uri('/assets/porcelain-sky.css'), ['refuel-ai-supplements-live-style'], '6.4.61');
+ });
+ 
+ // Keep the full WooCommerce product form and variation handling inside the
+@@ -167,10 +167,10 @@ add_action('wp_head', function () {
+     $icon = get_theme_file_uri('/assets/refuel-app-icon-192.png');
+     $touch_icon = get_theme_file_uri('/assets/refuel-app-icon-192.png');
+     ?>
+-    <link rel="manifest" href="<?php echo esc_url($manifest); ?>?v=6.4.60">
+-    <meta name="refuel-theme-version" content="6.4.60">
+-    <link rel="icon" href="<?php echo esc_url($icon); ?>?v=6.4.60" type="image/png" sizes="192x192">
+-    <link rel="apple-touch-icon" sizes="192x192" href="<?php echo esc_url($touch_icon); ?>?v=6.4.60">
++    <link rel="manifest" href="<?php echo esc_url($manifest); ?>?v=6.4.61">
++    <meta name="refuel-theme-version" content="6.4.61">
++    <link rel="icon" href="<?php echo esc_url($icon); ?>?v=6.4.61" type="image/png" sizes="192x192">
++    <link rel="apple-touch-icon" sizes="192x192" href="<?php echo esc_url($touch_icon); ?>?v=6.4.61">
+     <meta name="theme-color" content="#F6F3F0">
+     <meta name="mobile-web-app-capable" content="yes">
+     <meta name="apple-mobile-web-app-capable" content="yes">
+@@ -313,7 +313,7 @@ add_action('wp_ajax_nopriv_refuel_reset_stale_cart', 'refuel_ajax_clear_stale_ca
+ add_action('wp_footer', function () {
+     $worker_url = add_query_arg([
+         'refuel_pwa_worker' => '1',
+-        'v'                 => '6.4.60',
++        'v'                 => '6.4.61',
+     ], home_url('/'));
+     ?>
+     <script id="refuel-theme-loader-and-pwa-v4">
+@@ -766,8 +766,31 @@ function refuel_is_monthly_offer_category($slug, $name = '') {
+         in_array(strtolower(trim((string) $name)), ['sale for month', 'offer of the month'], true);
+ }
+ 
++/** Keep storefront category controls tied to populated WooCommerce terms. */
++function refuel_active_product_categories() {
++    if (!taxonomy_exists('product_cat')) { return []; }
++    $terms = get_terms([
++        'taxonomy' => 'product_cat', 'hide_empty' => true,
++        'orderby' => 'name', 'order' => 'ASC',
++    ]);
++    if (is_wp_error($terms)) { return []; }
++    return array_values(array_filter($terms, function ($term) {
++        return 'uncategorized' !== $term->slug;
++    }));
++}
++
++/** Prefer a product's specific WooCommerce category over broad/offer labels. */
++function refuel_product_category_label($terms) {
++    foreach (['pre-workout', 'protein', 'creatine', 'vitamins', 'fat-burner', 'recovery', 'performance'] as $slug) {
++        foreach ($terms as $term) {
++            if (sanitize_title($term->slug ?? '') === $slug) { return $term->name; }
++        }
++    }
++    return $terms ? $terms[0]->name : 'Uncategorized';
++}
++
+ function refuel_catalog_data($fresh = false) {
+-    $cache_key = 'refuel_shop_catalog_v6458';
++    $cache_key = 'refuel_shop_catalog_v6461';
+     $cached = get_transient($cache_key);
+     if (!$fresh && false !== $cached) { return $cached; }
+ 
+@@ -806,8 +829,13 @@ function refuel_catalog_data($fresh = false) {
+                 'averageRating' => (float) $product->get_average_rating(),
+                 'image' => wp_get_attachment_image_url($product->get_image_id(), 'woocommerce_thumbnail') ?: '',
+                 'categories' => array_values(wp_list_pluck($terms, 'slug')),
++                'categoryTerms' => array_map(function ($term) {
++                    $url = get_term_link($term);
++                    return ['slug' => $term->slug, 'name' => $term->name,
++                        'url' => is_wp_error($url) ? '' : $url];
++                }, $terms),
+                 'monthlyOffer' => !empty($monthly_offer_terms),
+-                'categoryLabel' => $category_names ? $category_names[0]->name : 'Supplements',
++                'categoryLabel' => refuel_product_category_label($category_names),
+             ];
+             $data[strtolower(trim($entry['name']))] = $entry;
+             if ($product->get_sku()) { $data[strtolower(trim($product->get_sku()))] = $entry; }
+@@ -861,8 +889,15 @@ function refuel_catalog_data($fresh = false) {
+                         'averageRating' => max(0, min(5, (float) ($item['average_rating'] ?? 0))),
+                         'image' => !empty($item['images'][0]['thumbnail']) ? esc_url_raw($item['images'][0]['thumbnail']) : '',
+                         'categories' => $category_slugs,
++                        'categoryTerms' => array_map(function ($category) {
++                            return ['slug' => sanitize_title($category['slug'] ?? ''),
++                                'name' => sanitize_text_field($category['name'] ?? ''),
++                                'url' => esc_url_raw($category['permalink'] ?? $category['link'] ?? '')];
++                        }, $categories),
+                         'monthlyOffer' => !empty($monthly_offer_terms),
+-                        'categoryLabel' => $category_names ? sanitize_text_field($category_names[0]['name'] ?? 'Supplements') : 'Supplements',
++                        'categoryLabel' => refuel_product_category_label(array_map(function ($category) {
++                            return (object) ['slug' => $category['slug'] ?? '', 'name' => $category['name'] ?? ''];
++                        }, $category_names)),
+                     ];
+                     $data[strtolower(trim($entry['name']))] = $entry;
+                     if (!empty($item['sku'])) { $data[strtolower(trim($item['sku']))] = $entry; }
+@@ -900,22 +935,15 @@ function refuel_woo_shop_url() {
+ 
+ /** Render the same live WooCommerce category selector in both site headers. */
+ function refuel_header_category_dropdown($id) {
+-    $terms = taxonomy_exists('product_cat') ? get_terms([
+-        'taxonomy' => 'product_cat',
+-        'hide_empty' => false,
+-        'orderby' => 'name',
+-        'order' => 'ASC',
+-    ]) : [];
++    $terms = refuel_active_product_categories();
+     echo '<label class="screen-reader-text" for="' . esc_attr($id) . '">Shop by category</label>';
+     echo '<select id="' . esc_attr($id) . '" class="refuel-category-select" aria-label="Shop by category" onchange="if(this.value){window.location.assign(this.value)}">';
+     echo '<option value="">Shop by category</option>';
+     echo '<option value="' . esc_url(refuel_woo_shop_url()) . '">All products</option>';
+-    if (!is_wp_error($terms)) {
+-        foreach ($terms as $term) {
+-            $url = get_term_link($term);
+-            if (!is_wp_error($url)) {
+-                echo '<option value="' . esc_url($url) . '">' . esc_html($term->name) . '</option>';
+-            }
++    foreach ($terms as $term) {
++        $url = get_term_link($term);
++        if (!is_wp_error($url)) {
++            echo '<option value="' . esc_url($url) . '">' . esc_html($term->name) . '</option>';
+         }
+     }
+     echo '</select>';
+diff --git a/refuel-ai-supplement-portrait-v5-4/index.php b/refuel-ai-supplement-portrait-v5-4/index.php
+index c1341f4..04ec13a 100644
+--- a/refuel-ai-supplement-portrait-v5-4/index.php
++++ b/refuel-ai-supplement-portrait-v5-4/index.php
+@@ -10472,8 +10472,10 @@
+       <a href="<?php echo esc_url(refuel_woo_shop_url()); ?>">View all products →</a>
+     </div>
+     <div class="refuel-quick-grid">
+-      <?php foreach (['Protein', 'Creatine', 'Pre-Workout', 'Vitamins', 'Accessories'] as $category_label) : ?>
+-        <a class="refuel-quick-tile" href="<?php echo esc_url(add_query_arg(['s' => $category_label, 'post_type' => 'product'], refuel_woo_shop_url())); ?>"><?php echo esc_html($category_label); ?><span aria-hidden="true">→</span></a>
++      <?php foreach (refuel_active_product_categories() as $term) :
++        $category_url = get_term_link($term);
++        if (is_wp_error($category_url)) { continue; } ?>
++        <a class="refuel-quick-tile" data-category-slug="<?php echo esc_attr($term->slug); ?>" href="<?php echo esc_url($category_url); ?>"><?php echo esc_html($term->name); ?><span aria-hidden="true">→</span></a>
+       <?php endforeach; ?>
+     </div>
+   </div>
+@@ -10567,8 +10569,10 @@
+             $refuel_item['brand'] = $refuel_brand;
+             $refuel_item['brandLabel'] = $refuel_brand_label;
+             $refuel_item['type'] = $refuel_type;
+-            $refuel_item['category'] = in_array($refuel_type, ['whey', 'isolate', 'casein', 'blend', 'lean'], true) ? 'protein' :
+-              ('creatine' === $refuel_type ? 'creatine' : ('vitamins' === $refuel_type ? 'vitamins' : 'performance'));
++            $refuel_slugs = $refuel_item['categories'] ?? [];
++            $refuel_item['category'] = in_array('protein', $refuel_slugs, true) ? 'protein' :
++              (in_array('creatine', $refuel_slugs, true) ? 'creatine' :
++              (in_array('vitamins', $refuel_slugs, true) ? 'vitamins' : 'performance'));
+           }
+           unset($refuel_item);
+         ?>
+@@ -10612,18 +10616,9 @@
+         <div class="category-shop-toolbar reveal">
+           <div class="category-shop-filters" aria-label="Filter products by category">
+             <button class="category-shop-button active" type="button" data-shop-type="all">All Products</button>
+-            <button class="category-shop-button" type="button" data-shop-type="whey">Whey Protein</button>
+-            <button class="category-shop-button" type="button" data-shop-type="isolate">Whey Isolate</button>
+-            <button class="category-shop-button" type="button" data-shop-type="casein">Casein</button>
+-            <button class="category-shop-button" type="button" data-shop-type="blend">Protein Blend</button>
+-            <button class="category-shop-button" type="button" data-shop-type="lean">Lean Protein</button>
+-            <button class="category-shop-button" type="button" data-shop-type="creatine">Creatine</button>
+-            <button class="category-shop-button" type="button" data-shop-type="preworkout">Pre-Workout</button>
+-            <button class="category-shop-button" type="button" data-shop-type="amino">Amino Acids</button>
+-            <button class="category-shop-button" type="button" data-shop-type="vitamins">Vitamins</button>
+-            <button class="category-shop-button" type="button" data-shop-type="weight">Weight Management</button>
+-            <button class="category-shop-button" type="button" data-shop-type="support">Performance Support</button>
+-            <button class="category-shop-button" type="button" data-shop-type="pump">Pump Support</button>
++            <?php foreach (refuel_active_product_categories() as $term) : ?>
++            <button class="category-shop-button" type="button" data-shop-type="<?php echo esc_attr($term->slug); ?>"><?php echo esc_html($term->name); ?></button>
++            <?php endforeach; ?>
+           </div>
+           <div class="shop-result-summary">
+             <strong id="shopResultCount"><?php echo count($refuel_grid_products); ?> products</strong>
+@@ -10635,6 +10630,7 @@
+           <?php foreach ($refuel_grid_products as $refuel_item) : ?>
+           <article class="product-card real-product-card reveal"
+             data-category="<?php echo esc_attr($refuel_item['category']); ?>"
++            data-categories="<?php echo esc_attr(implode(' ', $refuel_item['categories'] ?? [])); ?>"
+             data-type="<?php echo esc_attr($refuel_item['type']); ?>"
+             data-brand="<?php echo esc_attr($refuel_item['brand']); ?>"
+             data-id="<?php echo esc_attr(strtolower(trim($refuel_item['name']))); ?>"
+@@ -10654,7 +10650,7 @@
+               <h3><?php echo esc_html($refuel_item['name']); ?></h3>
+               <div class="rating">See product details</div>
+               <div class="product-meta">
+-                <span class="meta-chip type-chip"><?php echo esc_html(ucwords(str_replace(['preworkout', 'amino'], ['Pre-Workout', 'Amino Acids'], $refuel_item['type']))); ?></span>
++                <span class="meta-chip type-chip"><?php echo esc_html($refuel_item['categoryLabel']); ?></span>
+                 <span class="meta-chip"><?php echo esc_html($refuel_item['stockText']); ?></span>
+               </div>
+               <div class="product-bottom">
+@@ -10669,6 +10665,17 @@
+           <?php endforeach; ?>
+           <?php if (!$refuel_grid_products) : ?><p class="refuel-shop-unavailable">No published WooCommerce products are available yet.</p><?php endif; ?>
+         </div>
++        <template id="refuel-live-product-card-template">
++          <article class="product-card real-product-card" data-brand="other">
++            <span class="product-badge">SHOP PRODUCT</span>
++            <div class="product-visual real-product-visual" role="button" tabindex="0"><span class="product-brand-corner">Other Brands</span><img decoding="async" loading="lazy" class="real-product-image" alt=""></div>
++            <div class="product-body"><span class="micro-label">Other Brands</span><h3></h3><div class="rating">See product details</div>
++              <div class="product-meta"><span class="meta-chip type-chip"></span><span class="meta-chip stock-chip"></span></div>
++              <div class="product-bottom"><div class="price"><strong></strong><small></small></div><div class="product-actions"><button class="square-btn add-btn" type="button">+</button></div></div>
++            </div>
++            <div class="refuel-card-hover" aria-label="Quick product preview"><button type="button" class="refuel-card-hover-close" aria-label="Close product preview">✕</button><img loading="lazy" alt=""><h3></h3><strong class="refuel-card-hover-price"></strong><p>View available options and current stock for this product.</p><a class="refuel-card-preview-action" data-refuel-preview-open>View product</a></div>
++          </article>
++        </template>
+ 
+         <p class="refuel-live-shop-link"><a href="<?php echo esc_url(refuel_woo_shop_url()); ?>">Browse the live shop for the full catalogue and current availability →</a></p>
+         <div class="catalogue-more-wrap reveal">
+@@ -11205,32 +11212,96 @@
+   <script type="application/json" id="refuel-live-catalog"><?php echo wp_json_encode(refuel_catalog_data(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?></script>
+   <script id="refuel-catalog-sync">
+     (() => {
+-      const cards = [...document.querySelectorAll('#productGrid .product-card')];
++      let cards = [...document.querySelectorAll('#productGrid .product-card')];
++      const productGrid = document.getElementById('productGrid');
++      const productTemplate = document.getElementById('refuel-live-product-card-template');
+       const shopUrl = "<?php echo esc_js(refuel_woo_shop_url()); ?>";
+       const endpoint = "<?php echo esc_url(admin_url('admin-ajax.php?action=refuel_live_catalog')); ?>";
++      function syncCategoryControls(live) {
++        const filters = document.querySelector('.category-shop-filters');
++        const quickGrid = document.querySelector('.refuel-quick-grid');
++        if (!filters || !quickGrid) return;
++        const terms = new Map();
++        Object.values(live).forEach(item => {
++          (item?.categoryTerms || []).forEach(term => {
++            if (term.slug && term.name && term.slug !== 'uncategorized') terms.set(term.slug, term);
++          });
++        });
++        if (!terms.size) return;
++        const categories = [...terms.values()].sort((a, b) => a.name.localeCompare(b.name));
++        const current = [...filters.querySelectorAll('button[data-shop-type]:not([data-shop-type="all"])')]
++          .map(button => button.dataset.shopType).join('|');
++        if (current === categories.map(term => term.slug).join('|')) return;
++        const all = filters.querySelector('[data-shop-type="all"]');
++        filters.replaceChildren(all);
++        categories.forEach(term => {
++          const button = document.createElement('button');
++          button.className = 'category-shop-button';
++          button.type = 'button';
++          button.dataset.shopType = term.slug;
++          button.textContent = term.name;
++          filters.appendChild(button);
++        });
++        quickGrid.replaceChildren();
++        categories.forEach(term => {
++          if (!term.url) return;
++          const link = document.createElement('a');
++          link.className = 'refuel-quick-tile';
++          link.dataset.categorySlug = term.slug;
++          link.href = term.url;
++          link.append(document.createTextNode(term.name));
++          const arrow = document.createElement('span');
++          arrow.setAttribute('aria-hidden', 'true');
++          arrow.textContent = '→';
++          link.append(arrow);
++          quickGrid.appendChild(link);
++        });
++      }
+       function applyCatalog(live) {
+         const productsById = {};
+         Object.values(live).forEach(item => { if (item && item.wooId) productsById[item.wooId] = item; });
++        if (Object.keys(productsById).length && productGrid && productTemplate) {
++          const existingIds = new Set(cards.map(card => Number(card.dataset.wooId)));
++          Object.values(productsById).forEach(item => {
++            if (existingIds.has(Number(item.wooId))) return;
++            const card = productTemplate.content.firstElementChild.cloneNode(true);
++            card.dataset.id = item.name.trim().toLowerCase();
++            card.dataset.name = item.name;
++            card.dataset.wooId = item.wooId;
++            card.dataset.purpose = 'See the product page for ingredients, instructions and availability.';
++            const name = item.name.toLowerCase();
++            const brands = [
++              ['rule-one', 'Rule One', /rule[ -]?1|rule one|\br1\b/],
++              ['muscletech', 'MuscleTech', /muscletech|nitro-tech/],
++              ['optimum', 'Optimum Nutrition', /optimum|gold standard/],
++              ['bpi', 'BPI Sports', /bpi/], ['bsn', 'BSN', /bsn/],
++              ['gat', 'GAT Sport', /gat sport/]
++            ];
++            const brand = brands.find(entry => entry[2].test(name));
++            if (brand) {
++              card.dataset.brand = brand[0];
++              card.querySelector('.product-brand-corner').textContent = brand[1];
++              card.querySelector('.micro-label').textContent = brand[1];
++            } else if (name.includes('kevin levrone')) {
++              card.querySelector('.product-brand-corner').textContent = 'Kevin Levrone';
++              card.querySelector('.micro-label').textContent = 'Kevin Levrone';
++            }
++            productGrid.appendChild(card);
++            existingIds.add(Number(item.wooId));
++          });
++          cards.forEach(card => {
++            if (!productsById[card.dataset.wooId]) card.remove();
++          });
++          cards = [...productGrid.querySelectorAll('.product-card')];
++          productGrid.querySelector('.refuel-shop-unavailable')?.remove();
++        }
+         cards.forEach(card => {
+           const key = card.dataset.id.trim().toLowerCase();
+           const item = productsById[card.dataset.wooId] || live[key] || live[card.dataset.name.trim().toLowerCase()];
+           const action = card.querySelector('.add-btn');
+           if (!item) {
+-            const searchUrl = new URL(shopUrl, window.location.href);
+-            searchUrl.searchParams.set('s', card.dataset.name);
+-            searchUrl.searchParams.set('post_type', 'product');
+-            card.dataset.live = '0';
+-            card.dataset.url = searchUrl.toString();
+-            card.dataset.wooId = '';
+-            card.dataset.wooType = '';
+-            card.dataset.price = '';
+-            card.dataset.inStock = '0';
+-            card.querySelector('.rating').textContent = 'Find this product in shop';
+-            card.querySelector('.price strong').textContent = 'Check in shop';
+-            card.querySelector('.price small').textContent = 'Price and availability in shop';
+-            action.disabled = false;
+-            action.textContent = '→';
+-            action.setAttribute('aria-label', 'Find ' + card.dataset.name + ' in shop');
++            // Preserve the WooCommerce values rendered by PHP when a refresh
++            // response is incomplete or temporarily fails to match a product.
+             return;
+           }
+           card.dataset.live = '1';
+@@ -11239,18 +11310,43 @@
+           card.dataset.wooId = item.wooId || '';
+           card.dataset.wooType = item.wooType || '';
+           card.dataset.price = item.price === null ? '' : item.price;
++          const categories = Array.isArray(item.categories) ? item.categories : [];
++          card.dataset.categories = categories.join(' ');
++          card.dataset.category = categories.includes('protein') ? 'protein' :
++            categories.includes('creatine') ? 'creatine' : categories.includes('vitamins') ? 'vitamins' : 'performance';
++          card.querySelector('.type-chip').textContent = item.categoryLabel || 'Uncategorized';
++          const stockChip = card.querySelector('.product-meta .meta-chip:not(.type-chip)');
++          if (stockChip) stockChip.textContent = item.stockText || 'Available in shop';
++          card.querySelector('.real-product-visual').setAttribute('aria-label', 'View ' + item.name + ' product details');
+           card.dataset.inStock = item.inStock && item.purchasable ? '1' : '0';
+           card.querySelector('.product-body h3').textContent = item.name;
+           card.querySelector('.rating').textContent = 'See product details';
+           card.querySelector('.price strong').textContent = item.priceText;
++          const preview = card.querySelector('.refuel-card-hover');
++          if (preview) {
++            preview.querySelector('h3').textContent = item.name;
++            preview.querySelector('.refuel-card-hover-price').textContent = item.priceText;
++            preview.querySelector('.refuel-card-preview-action').href = item.url;
++            preview.querySelector('.refuel-card-preview-action').textContent = item.wooType === 'variable' ? 'Select options' : 'View product';
++            const previewImage = preview.querySelector('img');
++            if (previewImage) {
++              previewImage.hidden = !item.image;
++              if (item.image) { previewImage.src = item.image; previewImage.alt = item.name; }
++            }
++          }
+           card.querySelector('.price small').textContent = !item.inStock ? 'Out of stock' :
+             item.purchasable ? (item.stockText || 'Available in shop') : 'Check options in shop';
+           const image = card.querySelector('.real-product-image');
+-          if (item.image && image) image.src = item.image;
++          if (image) {
++            image.hidden = !item.image;
++            if (item.image) { image.src = item.image; image.alt = item.name; }
++          }
+           action.disabled = !item.inStock || !item.purchasable;
+           action.textContent = '+';
+           action.setAttribute('aria-label', 'Add ' + item.name);
+         });
++        syncCategoryControls(live);
++        window.refuelApplyProductFilters?.();
+         const offerGrid = document.querySelector('#monthlyOffer .monthly-offer-grid');
+         const offerTemplate = document.getElementById('refuel-monthly-offer-card-template');
+         if (offerGrid && offerTemplate && Object.keys(live).length) {
+@@ -11983,11 +12079,9 @@ const compactGoalProductMap = {
+ 
+     function filterProductsForGoal(goal) {
+       const allowed = compactGoalProductMap[goal] || [];
+-      const productCards = [...document.querySelectorAll('.product-card')];
+-
+-      productCards.forEach(card => {
+-        card.classList.toggle('hidden', allowed.length > 0 && !allowed.includes(card.dataset.category));
+-      });
++      activeShopGoal = goal || 'all';
++      catalogueExpanded = false;
++      applyBrandCategoryFilters();
+ 
+       document.querySelectorAll('.filter-btn').forEach(button => {
+         button.classList.remove('active');
+@@ -12020,7 +12114,12 @@ const compactGoalProductMap = {
+     });
+ 
+     document.getElementById('showAllGoalProducts').addEventListener('click', () => {
+-      document.querySelectorAll('.product-card').forEach(card => card.classList.remove('hidden'));
++      activeShopGoal = 'all';
++      activeShopBrand = 'all';
++      activeShopType = 'all';
++      catalogueExpanded = false;
++      brandShopButtons.forEach(button => button.classList.toggle('active', button.dataset.shopBrand === 'all'));
++      applyBrandCategoryFilters();
+       document.querySelectorAll('.hero-goal-chip').forEach(button => button.classList.remove('active'));
+       document.getElementById('showAllGoalProducts').classList.add('active');
+       document.getElementById('heroGoalStatus').textContent = 'All products';
+@@ -12385,11 +12484,13 @@ const compactGoalProductMap = {
+ 
+ 
+     const brandShopButtons = [...document.querySelectorAll('.brand-shop-button')];
+-    const categoryShopButtons = [...document.querySelectorAll('.category-shop-button')];
+-    const shopProductCards = [...document.querySelectorAll('#productGrid .product-card')];
++    const categoryShopToolbar = document.querySelector('.category-shop-filters');
++    const categoryShopButtons = () => [...document.querySelectorAll('.category-shop-button')];
++    const shopProductCards = () => [...document.querySelectorAll('#productGrid .product-card')];
+ 
+     let activeShopBrand = 'all';
+     let activeShopType = 'all';
++    let activeShopGoal = 'all';
+ 
+     const shopBrandLabels = {
+       all: 'All brands',
+@@ -12402,21 +12503,8 @@ const compactGoalProductMap = {
+       other: 'Other Brands'
+     };
+ 
+-    const shopTypeLabels = {
+-      all: 'All categories',
+-      whey: 'Whey Protein',
+-      isolate: 'Whey Isolate',
+-      casein: 'Casein',
+-      blend: 'Protein Blend',
+-      lean: 'Lean Protein',
+-      creatine: 'Creatine',
+-      preworkout: 'Pre-Workout',
+-      amino: 'Amino Acids',
+-      vitamins: 'Vitamins',
+-      weight: 'Weight Management',
+-      support: 'Performance Support',
+-      pump: 'Pump Support'
+-    };
++    const shopTypeLabel = slug => slug === 'all' ? 'All categories' :
++      categoryShopButtons().find(button => button.dataset.shopType === slug)?.textContent.trim() || slug;
+ 
+     const catalogueMoreButton = document.getElementById('catalogueMoreButton');
+     const catalogueMoreNote = document.getElementById('catalogueMoreNote');
+@@ -12424,15 +12512,21 @@ const compactGoalProductMap = {
+     let catalogueExpanded = false;
+ 
+     function applyBrandCategoryFilters() {
+-      const matchingCards = shopProductCards.filter(card => {
++      if (activeShopType !== 'all' && !categoryShopButtons().some(button => button.dataset.shopType === activeShopType)) {
++        activeShopType = 'all';
++      }
++      categoryShopButtons().forEach(button => button.classList.toggle('active', button.dataset.shopType === activeShopType));
++      const matchingCards = shopProductCards().filter(card => {
+         const brandMatch =
+           activeShopBrand === 'all' || card.dataset.brand === activeShopBrand;
+-        const typeMatch =
+-          activeShopType === 'all' || card.dataset.type === activeShopType;
+-        return brandMatch && typeMatch;
++        const typeMatch = activeShopType === 'all' ||
++          (card.dataset.categories || '').split(/\s+/).includes(activeShopType);
++        const goalMatch = activeShopGoal === 'all' ||
++          (compactGoalProductMap[activeShopGoal] || []).includes(card.dataset.category);
++        return brandMatch && typeMatch && goalMatch;
+       });
+ 
+-      shopProductCards.forEach(card => {
++      shopProductCards().forEach(card => {
+         const matches = matchingCards.includes(card);
+         card.classList.toggle('hidden', !matches);
+         card.classList.remove('catalogue-collapsed');
+@@ -12452,7 +12546,8 @@ const compactGoalProductMap = {
+         (matchingCards.length === 1 ? ' product' : ' products');
+ 
+       document.getElementById('shopActiveFilter').textContent =
+-        shopBrandLabels[activeShopBrand] + ' • ' + shopTypeLabels[activeShopType];
++        shopBrandLabels[activeShopBrand] + ' • ' + shopTypeLabel(activeShopType) +
++        (activeShopGoal === 'all' ? '' : ' • ' + activeShopGoal + ' goal');
+ 
+       if (matchingCards.length > compactCatalogueLimit) {
+         catalogueMoreButton.hidden = false;
+@@ -12493,33 +12588,20 @@ const compactGoalProductMap = {
+       });
+     });
+ 
+-    categoryShopButtons.forEach(button => {
+-      button.addEventListener('click', () => {
+-        activeShopType = button.dataset.shopType;
+-        catalogueExpanded = false;
+-        categoryShopButtons.forEach(item =>
+-          item.classList.toggle('active', item === button)
+-        );
+-        applyBrandCategoryFilters();
+-      });
++    categoryShopToolbar.addEventListener('click', event => {
++      const button = event.target.closest('.category-shop-button');
++      if (!button || !categoryShopToolbar.contains(button)) return;
++      activeShopType = button.dataset.shopType;
++      catalogueExpanded = false;
++      categoryShopButtons().forEach(item => item.classList.toggle('active', item === button));
++      applyBrandCategoryFilters();
+     });
++    window.refuelApplyProductFilters = applyBrandCategoryFilters;
+ 
+     const initialAllBrandsButton =
+       document.querySelector('.brand-shop-button[data-shop-brand="all"]');
+     if (initialAllBrandsButton) initialAllBrandsButton.classList.add('active');
+ 
+-    document.querySelectorAll('.hero-goal-chip').forEach(button => {
+-      button.addEventListener('click', () => {
+-        setTimeout(() => {
+-          const visible = shopProductCards.filter(card => !card.classList.contains('hidden')).length;
+-          document.getElementById('shopResultCount').textContent =
+-            visible + (visible === 1 ? ' product' : ' products');
+-          document.getElementById('shopActiveFilter').textContent =
+-            'Filtered by selected fitness goal';
+-        }, 50);
+-      });
+-    });
+-
+     applyBrandCategoryFilters();
+ 
+ 
+@@ -13405,7 +13487,7 @@ const compactGoalProductMap = {
+         }
+         const freshPage = new URL(window.location.href);
+         freshPage.searchParams.set('source', 'pwa');
+-        freshPage.searchParams.set('app_version', '6.4.60');
++        freshPage.searchParams.set('app_version', '6.4.61');
+         freshPage.searchParams.set('_refresh', String(Date.now()));
+         window.location.replace(freshPage.href);
+       });
+@@ -13546,10 +13628,10 @@ const compactGoalProductMap = {
+ 
+     bindRedirect('#cartButton', refuelWoo.cart);
+     bindRedirect('#checkoutButton', refuelWoo.checkout);
+-    document.querySelectorAll('.add-btn').forEach(function (button) {
+-      button.setAttribute('title', 'Add this product to the WooCommerce cart');
+-      button.addEventListener('click', function (event) {
+-        var card = event.currentTarget.closest('[data-name]');
++    document.addEventListener('click', function (event) {
++        var button = event.target.closest('#productGrid .add-btn');
++        if (!button) return;
++        var card = button.closest('[data-name]');
+         var name = card ? card.getAttribute('data-name') : '';
+         var id = card ? Number(card.dataset.wooId) : 0;
+         var url;
+@@ -13564,8 +13646,7 @@ const compactGoalProductMap = {
+           url = (card && card.dataset.url) || (refuelWoo.shop + separator + 's=' + encodeURIComponent(name));
+         }
+         stopAndGo(event, url);
+-      }, true);
+-    });
++    }, true);
+   });
+ })();
+ </script>
+diff --git a/refuel-ai-supplement-portrait-v5-4/manifest.webmanifest b/refuel-ai-supplement-portrait-v5-4/manifest.webmanifest
+index 7aad8fa..a90a880 100644
+--- a/refuel-ai-supplement-portrait-v5-4/manifest.webmanifest
++++ b/refuel-ai-supplement-portrait-v5-4/manifest.webmanifest
+@@ -3,7 +3,7 @@
+   "name": "Refuel AI Supplements",
+   "short_name": "Refuel AI Supplements",
+   "description": "Trusted supplement shopping and AI-guided product education.",
+-  "start_url": "/?source=pwa&app_version=6.4.60",
++  "start_url": "/?source=pwa&app_version=6.4.61",
+   "scope": "/",
+   "display": "standalone",
+   "background_color": "#020708",
+diff --git a/refuel-ai-supplement-portrait-v5-4/page-home.php b/refuel-ai-supplement-portrait-v5-4/page-home.php
+index c1341f4..04ec13a 100644
+--- a/refuel-ai-supplement-portrait-v5-4/page-home.php
++++ b/refuel-ai-supplement-portrait-v5-4/page-home.php
+@@ -10472,8 +10472,10 @@
+       <a href="<?php echo esc_url(refuel_woo_shop_url()); ?>">View all products →</a>
+     </div>
+     <div class="refuel-quick-grid">
+-      <?php foreach (['Protein', 'Creatine', 'Pre-Workout', 'Vitamins', 'Accessories'] as $category_label) : ?>
+-        <a class="refuel-quick-tile" href="<?php echo esc_url(add_query_arg(['s' => $category_label, 'post_type' => 'product'], refuel_woo_shop_url())); ?>"><?php echo esc_html($category_label); ?><span aria-hidden="true">→</span></a>
++      <?php foreach (refuel_active_product_categories() as $term) :
++        $category_url = get_term_link($term);
++        if (is_wp_error($category_url)) { continue; } ?>
++        <a class="refuel-quick-tile" data-category-slug="<?php echo esc_attr($term->slug); ?>" href="<?php echo esc_url($category_url); ?>"><?php echo esc_html($term->name); ?><span aria-hidden="true">→</span></a>
+       <?php endforeach; ?>
+     </div>
+   </div>
+@@ -10567,8 +10569,10 @@
+             $refuel_item['brand'] = $refuel_brand;
+             $refuel_item['brandLabel'] = $refuel_brand_label;
+             $refuel_item['type'] = $refuel_type;
+-            $refuel_item['category'] = in_array($refuel_type, ['whey', 'isolate', 'casein', 'blend', 'lean'], true) ? 'protein' :
+-              ('creatine' === $refuel_type ? 'creatine' : ('vitamins' === $refuel_type ? 'vitamins' : 'performance'));
++            $refuel_slugs = $refuel_item['categories'] ?? [];
++            $refuel_item['category'] = in_array('protein', $refuel_slugs, true) ? 'protein' :
++              (in_array('creatine', $refuel_slugs, true) ? 'creatine' :
++              (in_array('vitamins', $refuel_slugs, true) ? 'vitamins' : 'performance'));
+           }
+           unset($refuel_item);
+         ?>
+@@ -10612,18 +10616,9 @@
+         <div class="category-shop-toolbar reveal">
+           <div class="category-shop-filters" aria-label="Filter products by category">
+             <button class="category-shop-button active" type="button" data-shop-type="all">All Products</button>
+-            <button class="category-shop-button" type="button" data-shop-type="whey">Whey Protein</button>
+-            <button class="category-shop-button" type="button" data-shop-type="isolate">Whey Isolate</button>
+-            <button class="category-shop-button" type="button" data-shop-type="casein">Casein</button>
+-            <button class="category-shop-button" type="button" data-shop-type="blend">Protein Blend</button>
+-            <button class="category-shop-button" type="button" data-shop-type="lean">Lean Protein</button>
+-            <button class="category-shop-button" type="button" data-shop-type="creatine">Creatine</button>
+-            <button class="category-shop-button" type="button" data-shop-type="preworkout">Pre-Workout</button>
+-            <button class="category-shop-button" type="button" data-shop-type="amino">Amino Acids</button>
+-            <button class="category-shop-button" type="button" data-shop-type="vitamins">Vitamins</button>
+-            <button class="category-shop-button" type="button" data-shop-type="weight">Weight Management</button>
+-            <button class="category-shop-button" type="button" data-shop-type="support">Performance Support</button>
+-            <button class="category-shop-button" type="button" data-shop-type="pump">Pump Support</button>
++            <?php foreach (refuel_active_product_categories() as $term) : ?>
++            <button class="category-shop-button" type="button" data-shop-type="<?php echo esc_attr($term->slug); ?>"><?php echo esc_html($term->name); ?></button>
++            <?php endforeach; ?>
+           </div>
+           <div class="shop-result-summary">
+             <strong id="shopResultCount"><?php echo count($refuel_grid_products); ?> products</strong>
+@@ -10635,6 +10630,7 @@
+           <?php foreach ($refuel_grid_products as $refuel_item) : ?>
+           <article class="product-card real-product-card reveal"
+             data-category="<?php echo esc_attr($refuel_item['category']); ?>"
++            data-categories="<?php echo esc_attr(implode(' ', $refuel_item['categories'] ?? [])); ?>"
+             data-type="<?php echo esc_attr($refuel_item['type']); ?>"
+             data-brand="<?php echo esc_attr($refuel_item['brand']); ?>"
+             data-id="<?php echo esc_attr(strtolower(trim($refuel_item['name']))); ?>"
+@@ -10654,7 +10650,7 @@
+               <h3><?php echo esc_html($refuel_item['name']); ?></h3>
+               <div class="rating">See product details</div>
+               <div class="product-meta">
+-                <span class="meta-chip type-chip"><?php echo esc_html(ucwords(str_replace(['preworkout', 'amino'], ['Pre-Workout', 'Amino Acids'], $refuel_item['type']))); ?></span>
++                <span class="meta-chip type-chip"><?php echo esc_html($refuel_item['categoryLabel']); ?></span>
+                 <span class="meta-chip"><?php echo esc_html($refuel_item['stockText']); ?></span>
+               </div>
+               <div class="product-bottom">
+@@ -10669,6 +10665,17 @@
+           <?php endforeach; ?>
+           <?php if (!$refuel_grid_products) : ?><p class="refuel-shop-unavailable">No published WooCommerce products are available yet.</p><?php endif; ?>
+         </div>
++        <template id="refuel-live-product-card-template">
++          <article class="product-card real-product-card" data-brand="other">
++            <span class="product-badge">SHOP PRODUCT</span>
++            <div class="product-visual real-product-visual" role="button" tabindex="0"><span class="product-brand-corner">Other Brands</span><img decoding="async" loading="lazy" class="real-product-image" alt=""></div>
++            <div class="product-body"><span class="micro-label">Other Brands</span><h3></h3><div class="rating">See product details</div>
++              <div class="product-meta"><span class="meta-chip type-chip"></span><span class="meta-chip stock-chip"></span></div>
++              <div class="product-bottom"><div class="price"><strong></strong><small></small></div><div class="product-actions"><button class="square-btn add-btn" type="button">+</button></div></div>
++            </div>
++            <div class="refuel-card-hover" aria-label="Quick product preview"><button type="button" class="refuel-card-hover-close" aria-label="Close product preview">✕</button><img loading="lazy" alt=""><h3></h3><strong class="refuel-card-hover-price"></strong><p>View available options and current stock for this product.</p><a class="refuel-card-preview-action" data-refuel-preview-open>View product</a></div>
++          </article>
++        </template>
+ 
+         <p class="refuel-live-shop-link"><a href="<?php echo esc_url(refuel_woo_shop_url()); ?>">Browse the live shop for the full catalogue and current availability →</a></p>
+         <div class="catalogue-more-wrap reveal">
+@@ -11205,32 +11212,96 @@
+   <script type="application/json" id="refuel-live-catalog"><?php echo wp_json_encode(refuel_catalog_data(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?></script>
+   <script id="refuel-catalog-sync">
+     (() => {
+-      const cards = [...document.querySelectorAll('#productGrid .product-card')];
++      let cards = [...document.querySelectorAll('#productGrid .product-card')];
++      const productGrid = document.getElementById('productGrid');
++      const productTemplate = document.getElementById('refuel-live-product-card-template');
+       const shopUrl = "<?php echo esc_js(refuel_woo_shop_url()); ?>";
+       const endpoint = "<?php echo esc_url(admin_url('admin-ajax.php?action=refuel_live_catalog')); ?>";
++      function syncCategoryControls(live) {
++        const filters = document.querySelector('.category-shop-filters');
++        const quickGrid = document.querySelector('.refuel-quick-grid');
++        if (!filters || !quickGrid) return;
++        const terms = new Map();
++        Object.values(live).forEach(item => {
++          (item?.categoryTerms || []).forEach(term => {
++            if (term.slug && term.name && term.slug !== 'uncategorized') terms.set(term.slug, term);
++          });
++        });
++        if (!terms.size) return;
++        const categories = [...terms.values()].sort((a, b) => a.name.localeCompare(b.name));
++        const current = [...filters.querySelectorAll('button[data-shop-type]:not([data-shop-type="all"])')]
++          .map(button => button.dataset.shopType).join('|');
++        if (current === categories.map(term => term.slug).join('|')) return;
++        const all = filters.querySelector('[data-shop-type="all"]');
++        filters.replaceChildren(all);
++        categories.forEach(term => {
++          const button = document.createElement('button');
++          button.className = 'category-shop-button';
++          button.type = 'button';
++          button.dataset.shopType = term.slug;
++          button.textContent = term.name;
++          filters.appendChild(button);
++        });
++        quickGrid.replaceChildren();
++        categories.forEach(term => {
++          if (!term.url) return;
++          const link = document.createElement('a');
++          link.className = 'refuel-quick-tile';
++          link.dataset.categorySlug = term.slug;
++          link.href = term.url;
++          link.append(document.createTextNode(term.name));
++          const arrow = document.createElement('span');
++          arrow.setAttribute('aria-hidden', 'true');
++          arrow.textContent = '→';
++          link.append(arrow);
++          quickGrid.appendChild(link);
++        });
++      }
+       function applyCatalog(live) {
+         const productsById = {};
+         Object.values(live).forEach(item => { if (item && item.wooId) productsById[item.wooId] = item; });
++        if (Object.keys(productsById).length && productGrid && productTemplate) {
++          const existingIds = new Set(cards.map(card => Number(card.dataset.wooId)));
++          Object.values(productsById).forEach(item => {
++            if (existingIds.has(Number(item.wooId))) return;
++            const card = productTemplate.content.firstElementChild.cloneNode(true);
++            card.dataset.id = item.name.trim().toLowerCase();
++            card.dataset.name = item.name;
++            card.dataset.wooId = item.wooId;
++            card.dataset.purpose = 'See the product page for ingredients, instructions and availability.';
++            const name = item.name.toLowerCase();
++            const brands = [
++              ['rule-one', 'Rule One', /rule[ -]?1|rule one|\br1\b/],
++              ['muscletech', 'MuscleTech', /muscletech|nitro-tech/],
++              ['optimum', 'Optimum Nutrition', /optimum|gold standard/],
++              ['bpi', 'BPI Sports', /bpi/], ['bsn', 'BSN', /bsn/],
++              ['gat', 'GAT Sport', /gat sport/]
++            ];
++            const brand = brands.find(entry => entry[2].test(name));
++            if (brand) {
++              card.dataset.brand = brand[0];
++              card.querySelector('.product-brand-corner').textContent = brand[1];
++              card.querySelector('.micro-label').textContent = brand[1];
++            } else if (name.includes('kevin levrone')) {
++              card.querySelector('.product-brand-corner').textContent = 'Kevin Levrone';
++              card.querySelector('.micro-label').textContent = 'Kevin Levrone';
++            }
++            productGrid.appendChild(card);
++            existingIds.add(Number(item.wooId));
++          });
++          cards.forEach(card => {
++            if (!productsById[card.dataset.wooId]) card.remove();
++          });
++          cards = [...productGrid.querySelectorAll('.product-card')];
++          productGrid.querySelector('.refuel-shop-unavailable')?.remove();
++        }
+         cards.forEach(card => {
+           const key = card.dataset.id.trim().toLowerCase();
+           const item = productsById[card.dataset.wooId] || live[key] || live[card.dataset.name.trim().toLowerCase()];
+           const action = card.querySelector('.add-btn');
+           if (!item) {
+-            const searchUrl = new URL(shopUrl, window.location.href);
+-            searchUrl.searchParams.set('s', card.dataset.name);
+-            searchUrl.searchParams.set('post_type', 'product');
+-            card.dataset.live = '0';
+-            card.dataset.url = searchUrl.toString();
+-            card.dataset.wooId = '';
+-            card.dataset.wooType = '';
+-            card.dataset.price = '';
+-            card.dataset.inStock = '0';
+-            card.querySelector('.rating').textContent = 'Find this product in shop';
+-            card.querySelector('.price strong').textContent = 'Check in shop';
+-            card.querySelector('.price small').textContent = 'Price and availability in shop';
+-            action.disabled = false;
+-            action.textContent = '→';
+-            action.setAttribute('aria-label', 'Find ' + card.dataset.name + ' in shop');
++            // Preserve the WooCommerce values rendered by PHP when a refresh
++            // response is incomplete or temporarily fails to match a product.
+             return;
+           }
+           card.dataset.live = '1';
+@@ -11239,18 +11310,43 @@
+           card.dataset.wooId = item.wooId || '';
+           card.dataset.wooType = item.wooType || '';
+           card.dataset.price = item.price === null ? '' : item.price;
++          const categories = Array.isArray(item.categories) ? item.categories : [];
++          card.dataset.categories = categories.join(' ');
++          card.dataset.category = categories.includes('protein') ? 'protein' :
++            categories.includes('creatine') ? 'creatine' : categories.includes('vitamins') ? 'vitamins' : 'performance';
++          card.querySelector('.type-chip').textContent = item.categoryLabel || 'Uncategorized';
++          const stockChip = card.querySelector('.product-meta .meta-chip:not(.type-chip)');
++          if (stockChip) stockChip.textContent = item.stockText || 'Available in shop';
++          card.querySelector('.real-product-visual').setAttribute('aria-label', 'View ' + item.name + ' product details');
+           card.dataset.inStock = item.inStock && item.purchasable ? '1' : '0';
+           card.querySelector('.product-body h3').textContent = item.name;
+           card.querySelector('.rating').textContent = 'See product details';
+           card.querySelector('.price strong').textContent = item.priceText;
++          const preview = card.querySelector('.refuel-card-hover');
++          if (preview) {
++            preview.querySelector('h3').textContent = item.name;
++            preview.querySelector('.refuel-card-hover-price').textContent = item.priceText;
++            preview.querySelector('.refuel-card-preview-action').href = item.url;
++            preview.querySelector('.refuel-card-preview-action').textContent = item.wooType === 'variable' ? 'Select options' : 'View product';
++            const previewImage = preview.querySelector('img');
++            if (previewImage) {
++              previewImage.hidden = !item.image;
++              if (item.image) { previewImage.src = item.image; previewImage.alt = item.name; }
++            }
++          }
+           card.querySelector('.price small').textContent = !item.inStock ? 'Out of stock' :
+             item.purchasable ? (item.stockText || 'Available in shop') : 'Check options in shop';
+           const image = card.querySelector('.real-product-image');
+-          if (item.image && image) image.src = item.image;
++          if (image) {
++            image.hidden = !item.image;
++            if (item.image) { image.src = item.image; image.alt = item.name; }
++          }
+           action.disabled = !item.inStock || !item.purchasable;
+           action.textContent = '+';
+           action.setAttribute('aria-label', 'Add ' + item.name);
+         });
++        syncCategoryControls(live);
++        window.refuelApplyProductFilters?.();
+         const offerGrid = document.querySelector('#monthlyOffer .monthly-offer-grid');
+         const offerTemplate = document.getElementById('refuel-monthly-offer-card-template');
+         if (offerGrid && offerTemplate && Object.keys(live).length) {
+@@ -11983,11 +12079,9 @@ const compactGoalProductMap = {
+ 
+     function filterProductsForGoal(goal) {
+       const allowed = compactGoalProductMap[goal] || [];
+-      const productCards = [...document.querySelectorAll('.product-card')];
+-
+-      productCards.forEach(card => {
+-        card.classList.toggle('hidden', allowed.length > 0 && !allowed.includes(card.dataset.category));
+-      });
++      activeShopGoal = goal || 'all';
++      catalogueExpanded = false;
++      applyBrandCategoryFilters();
+ 
+       document.querySelectorAll('.filter-btn').forEach(button => {
+         button.classList.remove('active');
+@@ -12020,7 +12114,12 @@ const compactGoalProductMap = {
+     });
+ 
+     document.getElementById('showAllGoalProducts').addEventListener('click', () => {
+-      document.querySelectorAll('.product-card').forEach(card => card.classList.remove('hidden'));
++      activeShopGoal = 'all';
++      activeShopBrand = 'all';
++      activeShopType = 'all';
++      catalogueExpanded = false;
++      brandShopButtons.forEach(button => button.classList.toggle('active', button.dataset.shopBrand === 'all'));
++      applyBrandCategoryFilters();
+       document.querySelectorAll('.hero-goal-chip').forEach(button => button.classList.remove('active'));
+       document.getElementById('showAllGoalProducts').classList.add('active');
+       document.getElementById('heroGoalStatus').textContent = 'All products';
+@@ -12385,11 +12484,13 @@ const compactGoalProductMap = {
+ 
+ 
+     const brandShopButtons = [...document.querySelectorAll('.brand-shop-button')];
+-    const categoryShopButtons = [...document.querySelectorAll('.category-shop-button')];
+-    const shopProductCards = [...document.querySelectorAll('#productGrid .product-card')];
++    const categoryShopToolbar = document.querySelector('.category-shop-filters');
++    const categoryShopButtons = () => [...document.querySelectorAll('.category-shop-button')];
++    const shopProductCards = () => [...document.querySelectorAll('#productGrid .product-card')];
+ 
+     let activeShopBrand = 'all';
+     let activeShopType = 'all';
++    let activeShopGoal = 'all';
+ 
+     const shopBrandLabels = {
+       all: 'All brands',
+@@ -12402,21 +12503,8 @@ const compactGoalProductMap = {
+       other: 'Other Brands'
+     };
+ 
+-    const shopTypeLabels = {
+-      all: 'All categories',
+-      whey: 'Whey Protein',
+-      isolate: 'Whey Isolate',
+-      casein: 'Casein',
+-      blend: 'Protein Blend',
+-      lean: 'Lean Protein',
+-      creatine: 'Creatine',
+-      preworkout: 'Pre-Workout',
+-      amino: 'Amino Acids',
+-      vitamins: 'Vitamins',
+-      weight: 'Weight Management',
+-      support: 'Performance Support',
+-      pump: 'Pump Support'
+-    };
++    const shopTypeLabel = slug => slug === 'all' ? 'All categories' :
++      categoryShopButtons().find(button => button.dataset.shopType === slug)?.textContent.trim() || slug;
+ 
+     const catalogueMoreButton = document.getElementById('catalogueMoreButton');
+     const catalogueMoreNote = document.getElementById('catalogueMoreNote');
+@@ -12424,15 +12512,21 @@ const compactGoalProductMap = {
+     let catalogueExpanded = false;
+ 
+     function applyBrandCategoryFilters() {
+-      const matchingCards = shopProductCards.filter(card => {
++      if (activeShopType !== 'all' && !categoryShopButtons().some(button => button.dataset.shopType === activeShopType)) {
++        activeShopType = 'all';
++      }
++      categoryShopButtons().forEach(button => button.classList.toggle('active', button.dataset.shopType === activeShopType));
++      const matchingCards = shopProductCards().filter(card => {
+         const brandMatch =
+           activeShopBrand === 'all' || card.dataset.brand === activeShopBrand;
+-        const typeMatch =
+-          activeShopType === 'all' || card.dataset.type === activeShopType;
+-        return brandMatch && typeMatch;
++        const typeMatch = activeShopType === 'all' ||
++          (card.dataset.categories || '').split(/\s+/).includes(activeShopType);
++        const goalMatch = activeShopGoal === 'all' ||
++          (compactGoalProductMap[activeShopGoal] || []).includes(card.dataset.category);
++        return brandMatch && typeMatch && goalMatch;
+       });
+ 
+-      shopProductCards.forEach(card => {
++      shopProductCards().forEach(card => {
+         const matches = matchingCards.includes(card);
+         card.classList.toggle('hidden', !matches);
+         card.classList.remove('catalogue-collapsed');
+@@ -12452,7 +12546,8 @@ const compactGoalProductMap = {
+         (matchingCards.length === 1 ? ' product' : ' products');
+ 
+       document.getElementById('shopActiveFilter').textContent =
+-        shopBrandLabels[activeShopBrand] + ' • ' + shopTypeLabels[activeShopType];
++        shopBrandLabels[activeShopBrand] + ' • ' + shopTypeLabel(activeShopType) +
++        (activeShopGoal === 'all' ? '' : ' • ' + activeShopGoal + ' goal');
+ 
+       if (matchingCards.length > compactCatalogueLimit) {
+         catalogueMoreButton.hidden = false;
+@@ -12493,33 +12588,20 @@ const compactGoalProductMap = {
+       });
+     });
+ 
+-    categoryShopButtons.forEach(button => {
+-      button.addEventListener('click', () => {
+-        activeShopType = button.dataset.shopType;
+-        catalogueExpanded = false;
+-        categoryShopButtons.forEach(item =>
+-          item.classList.toggle('active', item === button)
+-        );
+-        applyBrandCategoryFilters();
+-      });
++    categoryShopToolbar.addEventListener('click', event => {
++      const button = event.target.closest('.category-shop-button');
++      if (!button || !categoryShopToolbar.contains(button)) return;
++      activeShopType = button.dataset.shopType;
++      catalogueExpanded = false;
++      categoryShopButtons().forEach(item => item.classList.toggle('active', item === button));
++      applyBrandCategoryFilters();
+     });
++    window.refuelApplyProductFilters = applyBrandCategoryFilters;
+ 
+     const initialAllBrandsButton =
+       document.querySelector('.brand-shop-button[data-shop-brand="all"]');
+     if (initialAllBrandsButton) initialAllBrandsButton.classList.add('active');
+ 
+-    document.querySelectorAll('.hero-goal-chip').forEach(button => {
+-      button.addEventListener('click', () => {
+-        setTimeout(() => {
+-          const visible = shopProductCards.filter(card => !card.classList.contains('hidden')).length;
+-          document.getElementById('shopResultCount').textContent =
+-            visible + (visible === 1 ? ' product' : ' products');
+-          document.getElementById('shopActiveFilter').textContent =
+-            'Filtered by selected fitness goal';
+-        }, 50);
+-      });
+-    });
+-
+     applyBrandCategoryFilters();
+ 
+ 
+@@ -13405,7 +13487,7 @@ const compactGoalProductMap = {
+         }
+         const freshPage = new URL(window.location.href);
+         freshPage.searchParams.set('source', 'pwa');
+-        freshPage.searchParams.set('app_version', '6.4.60');
++        freshPage.searchParams.set('app_version', '6.4.61');
+         freshPage.searchParams.set('_refresh', String(Date.now()));
+         window.location.replace(freshPage.href);
+       });
+@@ -13546,10 +13628,10 @@ const compactGoalProductMap = {
+ 
+     bindRedirect('#cartButton', refuelWoo.cart);
+     bindRedirect('#checkoutButton', refuelWoo.checkout);
+-    document.querySelectorAll('.add-btn').forEach(function (button) {
+-      button.setAttribute('title', 'Add this product to the WooCommerce cart');
+-      button.addEventListener('click', function (event) {
+-        var card = event.currentTarget.closest('[data-name]');
++    document.addEventListener('click', function (event) {
++        var button = event.target.closest('#productGrid .add-btn');
++        if (!button) return;
++        var card = button.closest('[data-name]');
+         var name = card ? card.getAttribute('data-name') : '';
+         var id = card ? Number(card.dataset.wooId) : 0;
+         var url;
+@@ -13564,8 +13646,7 @@ const compactGoalProductMap = {
+           url = (card && card.dataset.url) || (refuelWoo.shop + separator + 's=' + encodeURIComponent(name));
+         }
+         stopAndGo(event, url);
+-      }, true);
+-    });
++    }, true);
+   });
+ })();
+ </script>
+diff --git a/refuel-ai-supplement-portrait-v5-4/style.css b/refuel-ai-supplement-portrait-v5-4/style.css
+index fa0deac..6163f2e 100644
+--- a/refuel-ai-supplement-portrait-v5-4/style.css
++++ b/refuel-ai-supplement-portrait-v5-4/style.css
+@@ -1,9 +1,9 @@
+ /*
+-Theme Name: Refuel AI Supplements Mobile Chrome Fixed V6.4.60
++Theme Name: Refuel AI Supplements Mobile Chrome Fixed V6.4.61
+ Theme URI: https://refuelaisupplements.com/
+ Author: Refuel AI
+ Description: Custom Refuel AI Supplements landing page theme with WooCommerce shop, cart and checkout support.
+-Version: 6.4.60
++Version: 6.4.61
+ Text Domain: refuel-ai-supplements-gateway-safe-v5-6
+ Requires at least: 6.0
+ Tested up to: 7.1
+diff --git a/refuel-ai-supplement-portrait-v5-4/sw.js b/refuel-ai-supplement-portrait-v5-4/sw.js
+index 90a7281..3fe8d49 100644
+--- a/refuel-ai-supplement-portrait-v5-4/sw.js
++++ b/refuel-ai-supplement-portrait-v5-4/sw.js
+@@ -1,4 +1,4 @@
+-// Refuel AI Supplements 6.4.60: refresh the mobile shell and never replay a cached storefront/customer page.
++// Refuel AI Supplements 6.4.61: refresh the mobile shell and never replay a cached storefront/customer page.
+ 
+ self.addEventListener('install', event => {
+   event.waitUntil(self.skipWaiting());
