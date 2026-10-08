@@ -1,0 +1,119 @@
+diff -ruN a/refuel-ai-supplement-portrait-v5-4/UPDATE_V6.4.64.txt b/refuel-ai-supplement-portrait-v5-4/UPDATE_V6.4.64.txt
+--- a/refuel-ai-supplement-portrait-v5-4/UPDATE_V6.4.64.txt	1969-12-31 18:00:00.000000000 -0600
++++ b/refuel-ai-supplement-portrait-v5-4/UPDATE_V6.4.64.txt	2026-10-08 06:54:42.303123588 -0500
+@@ -0,0 +1,5 @@
++Refuel AI Supplements V6.4.64 — WhatsApp button activates with Refuel business number
++
++The floating WhatsApp link now uses the confirmed Refuel number 923209000100 whenever the WordPress Customizer field is empty or invalid. A valid number saved under Appearance → Customize → Refuel Customer Care still overrides this fallback. This resolves the v6.4.63 case in which the button was absent even though the theme was installed. The link opens https://wa.me/923209000100 with a product-help greeting. Other v6.4.63 placement and dialog behavior is retained.
++
++Install this ZIP as a theme update. The new theme version refreshes asset URLs and the PWA shell. Checkout and account pages still omit the floating contact control.
+diff -ruN a/refuel-ai-supplement-portrait-v5-4/front-page.php b/refuel-ai-supplement-portrait-v5-4/front-page.php
+--- a/refuel-ai-supplement-portrait-v5-4/front-page.php	2026-10-08 05:54:00.000000000 -0500
++++ b/refuel-ai-supplement-portrait-v5-4/front-page.php	2026-10-08 06:54:42.293879401 -0500
+@@ -13530,7 +13530,7 @@
+         }
+         const freshPage = new URL(window.location.href);
+         freshPage.searchParams.set('source', 'pwa');
+-        freshPage.searchParams.set('app_version', '6.4.63');
++        freshPage.searchParams.set('app_version', '6.4.64');
+         freshPage.searchParams.set('_refresh', String(Date.now()));
+         window.location.replace(freshPage.href);
+       });
+diff -ruN a/refuel-ai-supplement-portrait-v5-4/functions.php b/refuel-ai-supplement-portrait-v5-4/functions.php
+--- a/refuel-ai-supplement-portrait-v5-4/functions.php	2026-10-08 05:54:00.000000000 -0500
++++ b/refuel-ai-supplement-portrait-v5-4/functions.php	2026-10-08 06:54:42.249930236 -0500
+@@ -45,12 +45,12 @@
+         'type' => 'email',
+     ]);
+     $wp_customize->add_setting('refuel_whatsapp_number', [
+-        'default' => '',
++        'default' => '923209000100',
+         'sanitize_callback' => 'refuel_whatsapp_number',
+     ]);
+     $wp_customize->add_control('refuel_whatsapp_number', [
+         'label' => 'WhatsApp business number',
+-        'description' => 'Country code and number, for example 923001234567. The button appears after you save a valid number.',
++        'description' => 'Country code and number. Blank or invalid values use the Refuel business number 923209000100.',
+         'section' => 'refuel_customer_care',
+         'type' => 'tel',
+     ]);
+@@ -59,7 +59,7 @@
+ add_action('wp_footer', function () {
+     if (function_exists('is_checkout') && (is_checkout() || is_cart() || is_account_page())) { return; }
+     $number = refuel_whatsapp_number(get_theme_mod('refuel_whatsapp_number', ''));
+-    if (!$number) { return; }
++    if (!$number) { $number = '923209000100'; }
+     $url = 'https://wa.me/' . $number . '?text=' . rawurlencode('Hello Refuel AI Supplements, I need help with a product.');
+     echo '<a class="refuel-whatsapp" href="' . esc_url($url) . '" target="_blank" rel="noopener noreferrer" aria-label="Chat with Refuel AI Supplements on WhatsApp" title="Chat on WhatsApp">';
+     echo '<svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path fill="currentColor" d="M16 3a13 13 0 0 0-11.2 19.6L3 29l6.6-1.8A13 13 0 1 0 16 3Zm0 23.6a10.5 10.5 0 0 1-5.4-1.5l-.4-.2-3.9 1.1 1.1-3.8-.3-.4A10.5 10.5 0 1 1 16 26.6Zm5.8-7.9c-.3-.2-1.8-.9-2.1-1-.3-.1-.5-.2-.7.2-.2.3-.8 1-1 1.2-.2.2-.4.3-.7.1-1.7-.8-2.9-1.6-4.1-3.5-.3-.5.3-.5.9-1.8.1-.2 0-.4 0-.6l-1-2.5c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.5-.3.4-1.2 1.2-1.2 2.9s1.3 3.3 1.5 3.5c.2.2 2.4 3.7 5.9 5.2 2.2 1 3.1 1 4.2.9.7-.1 1.8-.8 2.1-1.5.3-.7.3-1.3.2-1.5-.1-.2-.3-.3-.6-.5Z"/></svg>';
+@@ -122,8 +122,8 @@
+ }, 9);
+ 
+ add_action('wp_enqueue_scripts', function () {
+-    wp_enqueue_style('refuel-ai-supplements-live-style', get_stylesheet_uri(), [], '6.4.63');
+-    wp_enqueue_style('refuel-porcelain-sky', get_theme_file_uri('/assets/porcelain-sky.css'), ['refuel-ai-supplements-live-style'], '6.4.63');
++    wp_enqueue_style('refuel-ai-supplements-live-style', get_stylesheet_uri(), [], '6.4.64');
++    wp_enqueue_style('refuel-porcelain-sky', get_theme_file_uri('/assets/porcelain-sky.css'), ['refuel-ai-supplements-live-style'], '6.4.64');
+ });
+ 
+ // Keep the full WooCommerce product form and variation handling inside the
+@@ -243,10 +243,10 @@
+     $icon = get_theme_file_uri('/assets/refuel-app-icon-192.png');
+     $touch_icon = get_theme_file_uri('/assets/refuel-app-icon-192.png');
+     ?>
+-    <link rel="manifest" href="<?php echo esc_url($manifest); ?>?v=6.4.63">
+-    <meta name="refuel-theme-version" content="6.4.63">
+-    <link rel="icon" href="<?php echo esc_url($icon); ?>?v=6.4.63" type="image/png" sizes="192x192">
+-    <link rel="apple-touch-icon" sizes="192x192" href="<?php echo esc_url($touch_icon); ?>?v=6.4.63">
++    <link rel="manifest" href="<?php echo esc_url($manifest); ?>?v=6.4.64">
++    <meta name="refuel-theme-version" content="6.4.64">
++    <link rel="icon" href="<?php echo esc_url($icon); ?>?v=6.4.64" type="image/png" sizes="192x192">
++    <link rel="apple-touch-icon" sizes="192x192" href="<?php echo esc_url($touch_icon); ?>?v=6.4.64">
+     <meta name="theme-color" content="#F6F3F0">
+     <meta name="mobile-web-app-capable" content="yes">
+     <meta name="apple-mobile-web-app-capable" content="yes">
+@@ -389,7 +389,7 @@
+ add_action('wp_footer', function () {
+     $worker_url = add_query_arg([
+         'refuel_pwa_worker' => '1',
+-        'v'                 => '6.4.63',
++        'v'                 => '6.4.64',
+     ], home_url('/'));
+     ?>
+     <script id="refuel-theme-loader-and-pwa-v4">
+diff -ruN a/refuel-ai-supplement-portrait-v5-4/manifest.webmanifest b/refuel-ai-supplement-portrait-v5-4/manifest.webmanifest
+--- a/refuel-ai-supplement-portrait-v5-4/manifest.webmanifest	2026-10-08 05:54:00.000000000 -0500
++++ b/refuel-ai-supplement-portrait-v5-4/manifest.webmanifest	2026-10-08 06:54:42.302863990 -0500
+@@ -3,7 +3,7 @@
+   "name": "Refuel AI Supplements",
+   "short_name": "Refuel AI Supplements",
+   "description": "Trusted supplement shopping and AI-guided product education.",
+-  "start_url": "/?source=pwa&app_version=6.4.63",
++  "start_url": "/?source=pwa&app_version=6.4.64",
+   "scope": "/",
+   "display": "standalone",
+   "background_color": "#020708",
+diff -ruN a/refuel-ai-supplement-portrait-v5-4/style.css b/refuel-ai-supplement-portrait-v5-4/style.css
+--- a/refuel-ai-supplement-portrait-v5-4/style.css	2026-10-08 05:54:00.000000000 -0500
++++ b/refuel-ai-supplement-portrait-v5-4/style.css	2026-10-08 06:54:42.248239034 -0500
+@@ -1,9 +1,9 @@
+ /*
+-Theme Name: Refuel AI Supplements Mobile Chrome Fixed V6.4.63
++Theme Name: Refuel AI Supplements Mobile Chrome Fixed V6.4.64
+ Theme URI: https://refuelaisupplements.com/
+ Author: Refuel AI
+ Description: Custom Refuel AI Supplements landing page theme with WooCommerce shop, cart and checkout support.
+-Version: 6.4.63
++Version: 6.4.64
+ Text Domain: refuel-ai-supplements-gateway-safe-v5-6
+ Requires at least: 6.0
+ Tested up to: 7.1
+diff -ruN a/refuel-ai-supplement-portrait-v5-4/sw.js b/refuel-ai-supplement-portrait-v5-4/sw.js
+--- a/refuel-ai-supplement-portrait-v5-4/sw.js	2026-10-08 05:54:00.000000000 -0500
++++ b/refuel-ai-supplement-portrait-v5-4/sw.js	2026-10-08 06:54:42.302421124 -0500
+@@ -1,4 +1,4 @@
+-// Refuel AI Supplements 6.4.63: refresh the mobile shell and never replay a cached storefront/customer page.
++// Refuel AI Supplements 6.4.64: refresh the mobile shell and never replay a cached storefront/customer page.
+ 
+ self.addEventListener('install', event => {
+   event.waitUntil(self.skipWaiting());
